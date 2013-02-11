@@ -1,4 +1,4 @@
-(function() {
+(function(apiView) {
 
     // Storing common selections
     var allEndpoints = $('li.endpoint'),
@@ -24,6 +24,12 @@
         $('ul.methods', this.parentNode.parentNode).slideToggle();
         $(this.parentNode.parentNode).toggleClass('expanded')
     })
+
+    $('input.variable-param').change(function(event) {
+      event.preventDefault();
+      var nameInput = $(this);
+      nameInput.closest('tr').find('td.parameter input').attr({name: 'params[' + nameInput.val() + ']'});
+    });
 
     // Toggle all endpoints
     $('#toggle-endpoints').click(function(event) {
@@ -114,7 +120,14 @@
 
         $(endpoint).toggleClass('expanded', true);
 
-    })
+    });
+
+    $(function() {
+      var hash;
+      if (hash = window.location.hash) {
+        $(hash + ' li.list-methods a').click();
+      }
+    });
 
     // Expand methods for a particular endpoint.
     // Show all forms and list all methods
@@ -163,6 +176,63 @@
     });
 
     /*
+     * Enable checkboxes for optional parameters when values are supplied.
+     */
+    $('td.parameter select')
+      .add('td.parameter input')
+      .add('td.parameter textarea').change(function(evt) {
+      evt.preventDefault();
+      var $widget = $(this);
+      var $chbox = $('.provide-' + this.name.match(/params\[(.*)\]/)[1], $widget.closest('tr'));
+      $chbox.attr({checked: $widget.val()});
+    });
+
+    /*
+     * Repeatable parameters.
+     */
+    $('input.repeatable').change(function(event) {
+      var self = this;
+      var $input = $(this);
+      event.preventDefault();
+
+      var $tr = $input.closest('tr');
+
+      // Only append new inputs at the end of the
+      // list of repeated rows.
+      if ($tr.next().attr('id') === $tr.attr('id')) {
+        return false;
+      }
+
+      var clone = $tr.clone(true);
+      clone.find('td.parameter input').val('');
+      // \u3003 is the ditto mark (〃).
+      var td_name = clone.find('td.name');
+      if (td_name.children('input').length) {
+        td_name.children('input').val('');
+      } else {
+        td_name.text('\u3003');
+      }
+      $('<button title="Remove parameter" class="remove">x</button>').prependTo(td_name).click(function(event) {
+        event.preventDefault();
+        clone.remove();
+      });
+      clone.find('td.type').text('\u3003');
+      clone.find('td.description p').text('\u3003');
+      //clone.find('td.enabled ').text('\u3003');
+      clone.insertAfter($tr);
+      
+    });
+
+    $('a.version').each(function() {
+      var $a = $(this);
+      $.ajax($a.attr('href'), { dataType: "text" }).done(function(version) {
+        $a.text(version);
+      }).fail(function(error) {
+        $a.addClass('error').text("Not available");
+      });
+    });
+
+    /*
         Try it! button. Submits the method params, apikey and secret if any, and apiName
     */
     $('li.method form').submit(function(event) {
@@ -174,6 +244,13 @@
             apiKey = { name: 'apiKey', value: $('input[name=key]').val() },
             apiSecret = { name: 'apiSecret', value: $('input[name=secret]').val() },
             apiName = { name: 'apiName', value: $('input[name=apiName]').val() };
+
+        // Exclude optional parameters with unchecked boxes.
+        params = params.filter(function(p) {
+          if (!p.name.match(/params/)) return true;
+          var $chxbox = $('.provide-' + p.name.match(/params\[(.*)\]/)[1], self);
+          return ($chxbox.length) ? $chxbox.is(':checked') : true;
+        });
 
         params.push(apiKey, apiSecret, apiName);
 
@@ -295,6 +372,21 @@
                 .toggleClass('error', true)
                 .text(response);
         })
-    })
+    });
+
+    /* It would be nice to do xml validation here...
+    $('textarea').each(function(i, e) {
+      var $textarea = $(this), schema_uri;
+      if (schema_uri = $textarea.data('xmlschema')) {
+        $.get(schema_uri).then(function(schema) {
+          $textarea.change(function(event) {
+            var opts = {
+              xml: $textarea.val(),
+              schema: schema,
+              arguments: ['--noout']
+            };
+      }
+    });
+    */
 
 })();
