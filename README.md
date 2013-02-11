@@ -15,6 +15,8 @@ You can find the latest version here: [https://github.com/mashery/iodocs](https:
 
 However, we recommend that you install I/O Docs with *npm*, the Node package manager. See instructions below.
 
+This is a modified version of the code adapted to work with the intermine API layer.
+
 BUILD/RUNTIME DEPENDENCIES
 --------------------------
 1. Node.js - server-side JS engine
