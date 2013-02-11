@@ -1,0 +1,8 @@
+div.api
+  h1=apiInfo.name 
+
+  if apiInfo.version
+    span API version:
+    a.version(href="#{apiInfo.protocol}://#{apiInfo.baseURL}#{apiInfo.publicPath}/#{apiInfo.version}")
+      | ???
+

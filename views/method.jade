@@ -1,0 +1,86 @@
+// views/method
+
+- var httpMethod = method.HTTPMethod.toLowerCase()
+- var secure = (method.RequiresOAuth === 'Y' || method.RequiresOAuth === true) ? 'authrequired' : ''
+
+li(class='method ' + httpMethod + ' ' + secure, id = httpMethod + '-' + endpoint.identifier)
+
+  div.title
+    span.http-method #{method.HTTPMethod}
+    span.name        #{method.MethodName}
+    span.uri         #{method.URI}
+
+  form.hidden
+    input(type='hidden', name='httpMethod', value=method.HTTPMethod)
+    input(type='hidden', name='oauth', value=secure)
+    input(type='hidden', name='methodUri', value=method.URI)
+
+    span.synopsis    #{method.Synopsis}
+    span.description #{method.Description}
+
+    if method.parameters.length > 0
+      table.parameters
+        thead
+          tr
+            th Parameter
+            th Value
+            th Type
+            th Description
+            th // place holder for enabling
+        tbody
+            paramCount = 0
+            each parameter in method.parameters
+              - paramCount++
+              include parameter
+
+    if method.body && method.body.length > 0
+      bodyExample = ''
+      h3.request-body Request Body:
+        if method.body.length == 1
+          span.body-format #{ method.body[0].contentType }
+          if method.body[0].schema
+            a.body-schema(href = apiInfo.protocol + "://" + apiInfo.baseURL + ":" + (apiInfo.port || "80") + apiInfo.publicPath + method.body[0].schema ) #{ method.body[0].schema }
+          input(type="hidden", name="body[Format]", value=method.body[0].contentType)
+          - bodyExample = method.body[0].example
+      if method.bodyDescription
+        span.body-description #{ method.bodyDescription }
+      if method.body.length > 1
+        select.body-format(name = 'body[Format]')
+          each format in method.body
+            - bodyExample = bodyExample || format.example
+            option(value = format.contentType, data-example=format.example) #{format.contentType}
+
+      textarea.body-content(name = 'body[Content]', cols = 80, rows = 10) #{ bodyExample }
+
+    // Create header fields and button to add/remove headers.
+    if method.headers && method.headers.length > 0
+      div.headers
+        h4.title
+          div.indicator
+          span Headers
+        div.fields
+          table
+            colgroup
+              col(class='name')
+              col(class='value')
+              col(class='remove')
+            thead
+              tr
+                th Name
+                th(colspan='2') Value
+            tbody
+              tr
+                td
+                  input(name='headerNames[]', placeholder='Name')
+                td
+                  input(name='headerValues[]', placeholder='Value')
+                td
+                  a(href='#', class='remove') Remove
+
+          a(href='#', class='add-headers') Add Header
+    
+    if !method['read-only']
+      br
+      input.try-it(type='submit', id=method.MethodName, value='Try it!')
+
+// end views/method

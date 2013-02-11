@@ -1,0 +1,102 @@
+// views/parameter
+
+if parameter.Required === 'Y'
+  required = true
+  className = 'required'
+else
+  required = false
+  className = ''
+
+tr(id='param' + paramCount, class=className)
+
+  td.name
+    if '?' === parameter.Name
+      input.variable-param(type = 'text')
+    else
+      | #{parameter.Name}
+
+  td.parameter
+
+    if parameter.Type && parameter.Type.match(/\[\]$/)
+      paramClass = 'repeatable'
+      paramType = parameter.Type.replace('[]', '')
+    else
+      paramClass = ''
+      paramType = parameter.Type || ''
+
+    case paramType.toLowerCase()
+      when 'enumerated'
+        select(class=paramClass, name='params[' + parameter.Name + ']', placeholder=className)
+          if parameter.Default == ''
+            option(value='') 
+          each choice in parameter.EnumeratedList
+            if parameter.Default == choice
+              option(value=choice, selected=true) #{choice}
+            else
+              option(value=choice) #{choice}
+      when 'boolean'
+        select(class=paramClass, name='params[' + parameter.Name + ']', placeholder=className)
+          if parameter.Default == ''
+            option(value='') 
+          each choice in [apiInfo.booleanTrueVal, apiInfo.booleanFalseVal]
+            if parameter.Default == choice
+              option(value=choice, selected=true) #{choice}
+            else
+              option(value=choice) #{choice}
+      when 'json'
+        schema = parameter.Schema || ''
+        textarea(
+          class = 'param ' + paramClass,
+          rows = "4",
+          cols = "50",
+          name = 'params[' + parameter.Name + ']',
+          value = parameter.Default, placeholder=className, data-xmlschema=schema)
+      when 'xml'
+        schema = parameter.Schema || ''
+        textarea(
+          class = 'param ' + paramClass,
+          rows = "4",
+          cols = "50",
+          name = 'params[' + parameter.Name + ']',
+          value = parameter.Default, placeholder=className, data-xmlschema=schema)
+      when 'integer'
+        input(
+          class = paramClass,
+          name = 'params[' + parameter.Name  + ']',
+          value = parameter.Default,
+          placeholder = className,
+          type = "number",
+          max = parameter.Max,
+          min = parameter.Min)
+      when 'email'
+        input(
+          class = paramClass,
+          name = 'params[' + parameter.Name + ']',
+          value = parameter.Default,
+          placeholder = className,
+          type = 'email')
+      default
+        input(
+          class = paramClass,
+          name = 'params[' + parameter.Name + ']',
+          value = parameter.Default,
+          placeholder = className,
+          type = 'text')
+
+  td.type=parameter.Type
+
+  td.description
+      p=parameter.Description || 'No description'
+      if parameter.Type =='enumerated' && parameter.EnumeratedDescription
+        dl.clearfix
+          each description, choice in parameter.EnumeratedDescription
+            dt #{choice}
+            dd #{description}
+
+  td.enabled
+    if required
+      input(type='checkbox', checked=true, disabled=true, title="This parameter must be provided")
+    else
+      input(type='checkbox', class='provide-' + parameter.Name, title="Provide this optional parameter")
+
+

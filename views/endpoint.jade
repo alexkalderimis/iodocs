@@ -1,0 +1,19 @@
+// views/endpoint
+
+li.endpoint(id = endpoint.identifier)
+  h3.title
+  span.name=endpoint.name
+  ul.actions
+    li.list-methods
+       a(href='#') List Methods
+    li.expand-methods
+       a(href='#') Expand Methods
+    if endpoint.minVersion
+      span.since
+        | Since version:
+        span.version=endpoint.minVersion
+  ul.methods.hidden
+    each method in endpoint.methods
+      include method
+
+// end views/endpoint
