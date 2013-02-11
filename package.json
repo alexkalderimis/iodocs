@@ -14,19 +14,19 @@
     "Kelly Miyashiro <kelly@mashery.com.com>",
     "Neil Mansilla <neil@mashery.com>",
     "Mike Squires <msquires@mashery.com>",
-    "Uriah Welcome <uriah@mashery.com>"
+    "Uriah Welcome <uriah@mashery.com>",
+    "Alex Kalderimis <alex@intermine.org"
   ],
   "repository": {
     "type": "git",
     "url": "git://github.com/mashery/iodocs.git"
   },
   "dependencies": {
-    "connect-redis": "1.0.6",
     "express": "2.5.8",
-    "jade": "0.13",
+    "jade": "0.28.1",
     "oauth": "0.9.3",
-    "redis": ">= 0.7.0",
-    "querystring": "0.1.0"
+    "querystring": "0.1.0",
+    "require-jade": "0.0.1"
   },
   "devDependencies": {},
   "main": "index",
