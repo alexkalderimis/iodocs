@@ -30,7 +30,7 @@ $delete: #f5e8e8;
   font-family for monospace
 */
 @mixin monospace() {
-    font-family: 'Inconsolata', 'Monaco', 'Consolas', 'Bitstream Vera Mono', monospace;
+    font-family: 'Droid Sans', 'Inconsolata', 'Monaco', 'Consolas', 'Bitstream Vera Mono', monospace;
 }
 
 html,body,div,span,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,abbr,address,cite,code,del,dfn,em,img,ins,kbd,
@@ -267,13 +267,15 @@ textarea:invalid {
   -ms-interpolation-mode: bicubic;
 }
 
+@import url(http://fonts.googleapis.com/css?family=Roboto);
+@import url(http://fonts.googleapis.com/css?family=Roboto+Condensed);
 
 body,
 select,
 input,
 textarea {
   color: #444;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Roboto', Helvetica, Arial, sans-serif;
 }
 
 h1,h2,h3,h4,h5,h6 {
@@ -285,7 +287,7 @@ html {
 }
 
 body {
-  width: 960px;
+  max-width: 960px;
   margin: 15px auto;
 }
 
@@ -352,6 +354,14 @@ li {
             padding-left: 10px;
             border-left: 1px solid #ddd;
         }
+    }
+}
+
+.api {
+    margin-bottom: 1em;
+
+    h1 {
+        font-family: 'Roboto Condensed', 'Roboto', 'Helvetica', 'Arial', sans-serif;
     }
 }
 
@@ -446,7 +456,33 @@ li {
             line-height: 33px;
             float: left;
         }
+    }
 
+    h3.request-body {
+        margin-top: 1em;
+        margin-bottom: 1em;
+    }
+
+    select.body-format {
+        display: block;
+    }
+
+    .body-schema,
+    span.body-format {
+        border: 1px solid #ccc;
+        padding: 0.5em;
+        font-family: monospace;
+    }
+
+    textarea.param,
+    textarea.body-content {
+        font-family: monospace;
+    }
+
+    td.parameter {
+        input, textarea {
+            width: 95%;
+        }
     }
 
     // Instead of this indicator, maybe do a validation check on attempt and tell them to set their key/secret.
@@ -503,6 +539,25 @@ li {
         &.error {
             background-color: rgba(255,66,66,0.2);
         }
+    }
+
+    .try-it {
+        border: none;
+        display: inline-block;
+        color: #ffffff;
+        background-color: #ff5c00;
+        text-decoration: none;
+        outline: none;
+        font-weight: bold;
+        padding: 5px 10px 6px;
+        line-height: 1;
+        text-shadow: 0 -1px 1px rgba(0,0,0,0.25);
+        border-bottom: 1px solid rgba(0,0,0,0.25);
+        border-radius: 5px;
+    }
+
+    .try-it:hover {
+        background-color: #ff7200;
     }
 }
 
