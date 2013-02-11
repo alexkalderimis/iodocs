@@ -21,6 +21,8 @@
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+// This version has all its redis dependencies stripped.
+
 //
 // Module dependencies
 //
@@ -32,9 +34,9 @@ var express     = require('express'),
     url         = require('url'),
     http        = require('http'),
     https       = require('https'),
-    crypto      = require('crypto'),
-    redis       = require('redis'),
-    RedisStore  = require('connect-redis')(express);
+    crypto      = require('crypto');
+    //redis       = require('redis'),
+    //RedisStore  = require('connect-redis')(express);
 
 // Configuration
 try {
@@ -45,9 +47,14 @@ try {
     process.exit(1);
 }
 
+var CAN_HAVE_BODY = function (method) {
+  return ['POST','PUT','DELETE'].indexOf(method) >= 0;
+};
+
 //
-// Redis connection
-//
+// Redis connection (used for persisting OAuth connection details).
+// Removed from this version, as is not required.
+/*
 var defaultDB = '0';
 var db;
 
@@ -65,27 +72,61 @@ db.on("error", function(err) {
          console.log("Error " + err);
     }
 });
+*/
 
 //
 // Load API Configs
 //
 var apisConfig;
+var imAPIs = {};
 fs.readFile('public/data/apiconfig.json', 'utf-8', function(err, data) {
+    var apiName;
     if (err) throw err;
     apisConfig = JSON.parse(data);
     if (config.debug) {
          console.log(util.inspect(apisConfig));
     }
+    for (apiName in apisConfig) {
+        (function(name) {
+            var api, serviceListingURI;
+            api = apisConfig[name];
+            var handleError = function (e) {
+                console.log("Could not fetch service listing for " + name + ", " + e);
+                delete apisConfig[name];
+            };
+            if (api.intermine) {
+                serviceListingURI = api.protocol + "://" + api.baseURL + api.publicPath;
+                console.log("Fetching service listing from " + serviceListingURI);
+                var req = http.get(serviceListingURI, function(res) {
+                    var body = "";
+                    res.on('data', function(chunk) {
+                        body += chunk;
+                    });
+                    res.on('end', function() {
+                        console.log("Retrieved service listing for " + name);
+                        try {
+                            imAPIs[name] = JSON.parse(body);
+                        } catch (e) {
+                            var msg = "Error parsing service listing for " + name + ": " + e;
+                            handleError(new Error(msg));
+                        }
+                    });
+                });
+                req.on('error', handleError);
+            }
+        })(apiName);
+    }
+
 });
 
 var app = module.exports = express.createServer();
 
-if (process.env.REDISTOGO_URL) {
-    var rtg   = require("url").parse(process.env.REDISTOGO_URL);
-    config.redis.host = rtg.hostname;
-    config.redis.port = rtg.port;
-    config.redis.password = rtg.auth.split(":")[1];
-}
+//if (process.env.REDISTOGO_URL) {
+//    var rtg   = require("url").parse(process.env.REDISTOGO_URL);
+//    config.redis.host = rtg.hostname;
+//    config.redis.port = rtg.port;
+//    config.redis.password = rtg.auth.split(":")[1];
+//}
 
 app.configure(function() {
     app.set('views', __dirname + '/views');
@@ -95,13 +136,13 @@ app.configure(function() {
     app.use(express.methodOverride());
     app.use(express.cookieParser());
     app.use(express.session({
-        secret: config.sessionSecret,
-        store:  new RedisStore({
-            'host':   config.redis.host,
-            'port':   config.redis.port,
-            'pass':   config.redis.password,
-            'maxAge': 1209600000
-        })
+        secret: config.sessionSecret
+        //store:  new RedisStore({
+        //    'host':   config.redis.host,
+        //    'port':   config.redis.port,
+        //    'pass':   config.redis.password,
+        //    'maxAge': 1209600000
+        //})
     }));
 
     app.use(app.router);
@@ -125,6 +166,7 @@ function oauth(req, res, next) {
     var apiName = req.body.apiName,
         apiConfig = apisConfig[apiName];
 
+    /*
     if (apiConfig.oauth) {
         var apiKey = req.body.apiKey || req.body.key,
             apiSecret = req.body.apiSecret || req.body.secret,
@@ -146,8 +188,11 @@ function oauth(req, res, next) {
             console.log('apiSecret: ' + apiSecret);
         };
 
-        // Check if the API even uses OAuth, then if the method requires oauth, then if the session is not authed
-        if (apiConfig.oauth.type == 'three-legged' && req.body.oauth == 'authrequired' && (!req.session[apiName] || !req.session[apiName].authed) ) {
+        // Check if the API even uses OAuth, then if the method requires oauth, then
+        // if the session is not authed
+        if (apiConfig.oauth.type == 'three-legged'
+            && req.body.oauth == 'authrequired'
+            && (!req.session[apiName] || !req.session[apiName].authed) ) {
             if (config.debug) {
                 console.log('req.session: ' + util.inspect(req.session));
                 console.log('headers: ' + util.inspect(req.headers));
@@ -188,14 +233,16 @@ function oauth(req, res, next) {
             next();
         }
     } else {
+    */
         next();
-    }
+    //}
 
 }
 
 //
 // OAuth Success!
 //
+/*
 function oauthSuccess(req, res, next) {
     var oauthRequestToken,
         oauthRequestTokenSecret,
@@ -243,9 +290,11 @@ function oauthSuccess(req, res, next) {
             console.log(util.inspect(oa));
         };
 
-        oa.getOAuthAccessToken(oauthRequestToken, oauthRequestTokenSecret, req.query.oauth_verifier, function(error, oauthAccessToken, oauthAccessTokenSecret, results) {
+        var handleToken = function(error, oauthAccessToken, oauthAccessTokenSecret, results) {
             if (error) {
-                res.send("Error getting OAuth access token : " + util.inspect(error) + "["+oauthAccessToken+"]"+ "["+oauthAccessTokenSecret+"]"+ "["+util.inspect(results)+"]", 500);
+                res.send("Error getting OAuth access token : " + util.inspect(error)
+                    + "[" + oauthAccessToken +"]" + "["+oauthAccessTokenSecret +"]"
+                    + "[" + util.inspect(results) +"]", 500);
             } else {
                 if (config.debug) {
                     console.log('results: ' + util.inspect(results));
@@ -262,10 +311,15 @@ function oauthSuccess(req, res, next) {
                     next();
                 });
             }
-        });
+        };
+        oa.getOAuthAccessToken(
+            oauthRequestToken, oauthRequestTokenSecret,
+            req.query.oauth_verifier, handleToken
+        );
 
     });
 }
+*/
 
 //
 // processRequest - handles API call
@@ -277,6 +331,7 @@ function processRequest(req, res, next) {
 
     var reqQuery = req.body,
         params = reqQuery.params || {},
+        body = reqQuery.body,
         methodURL = reqQuery.methodUri,
         httpMethod = reqQuery.httpMethod,
         apiKey = reqQuery.apiKey,
@@ -318,10 +373,14 @@ function processRequest(req, res, next) {
             path: apiConfig.publicPath + methodURL// + ((paramString.length > 0) ? '?' + paramString : "")
         };
 
-    if (['POST','DELETE','PUT'].indexOf(httpMethod) !== -1) {
-        var requestBody = query.stringify(params);
+    var requestBody;
+    if (body == null && ['POST','DELETE','PUT'].indexOf(httpMethod) !== -1) {
+        requestBody = query.stringify(params);
+    } else if (body != null) {
+        requestBody = body.Content;
     }
 
+    /*
     if (apiConfig.oauth) {
         console.log('Using OAuth');
 
@@ -460,19 +519,21 @@ function processRequest(req, res, next) {
             }
 
         } else {
-            // API uses OAuth, but this call doesn't require auth and the user isn't already authed, so just call it.
+            // API uses OAuth, but this call doesn't require auth and the user
+            // isn't already authed, so just call it.
             unsecuredCall();
         }
     } else {
+    */
         // API does not use authentication
         unsecuredCall();
-    }
+    //}
 
     // Unsecured API Call helper
     function unsecuredCall() {
         console.log('Unsecured Call');
 
-        if (['POST','PUT','DELETE'].indexOf(httpMethod) === -1) {
+        if (body != null || !CAN_HAVE_BODY(httpMethod)) {
             options.path += ((paramString.length > 0) ? '?' + paramString : "");
         }
 
@@ -532,7 +593,7 @@ function processRequest(req, res, next) {
         }
 
         if (requestBody) {
-            options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+            options.headers['Content-Type'] = (body == null) ? 'application/x-www-form-urlencoded' : body.Format;
         }
 
         if (config.debug) {
@@ -641,14 +702,18 @@ app.dynamicHelpers({
         }
     },
     apiName: function(req, res) {
-        if (req.params.api) {
-            return req.params.api;
-        }
+      return req.params.api;
     },
     apiDefinition: function(req, res) {
+        // This should make requests to the specific service to retrieve the service listing.
         if (req.params.api) {
-            var data = fs.readFileSync('public/data/' + req.params.api + '.json');
-            return JSON.parse(data);
+            var apiInfo = apisConfig[req.params.api];
+            if (apiInfo.intermine) {
+                return imAPIs[req.params.api];
+            } else {
+                var data = fs.readFileSync('public/data/' + req.params.api + '.json');
+                return JSON.parse(data);
+            }
         }
     }
 })
@@ -679,11 +744,13 @@ app.post('/processReq', oauth, processRequest, function(req, res) {
 app.all('/auth', oauth);
 
 // OAuth callback page, closes the window immediately after storing access token/secret
+/*
 app.get('/authSuccess/:api', oauthSuccess, function(req, res) {
     res.render('authSuccess', {
         title: 'OAuth Successful'
     });
 });
+*/
 
 app.post('/upload', function(req, res) {
   console.log(req.body.user);
@@ -693,6 +760,49 @@ app.post('/upload', function(req, res) {
 // API shortname, all lowercase
 app.get('/:api([^\.]+)', function(req, res) {
     res.render('api');
+});
+
+app.get('/:api/:endpoint', function(req, res, next) {
+    // make sure we don't try and handle requests to /javascripts, etc
+    if (apisConfig[ req.params.api ]) {
+      res.render('api-endpoint');
+    } else {
+      next();
+    }
+});
+
+app.get('/definition/:api([^\.]+)', function(req, res) {
+  var api = apisConfig[ req.params.api ];
+
+  if (api.intermine) {
+    serviceListingURI = api.protocol + "://" + api.baseURL + api.publicPath;
+    console.log("Fetching service listing from " + serviceListingURI);
+    var req = http.get(serviceListingURI, function(res) {
+      var body = "";
+      res.on('data', function(chunk) {
+        body += chunk;
+      });
+      res.on('end', function() {
+        console.log("Retrieved service listing for " + name);
+        try {
+          imAPIs[name] = JSON.parse(body);
+          res.json(imAPIs[name]);
+        } catch (e) {
+          var msg = "Error parsing service listing for " + name + ": " + e;
+          handleError(new Error(msg));
+        }
+      });
+    });
+    req.on('error', handleError);
+  } else {
+    fs.readFile('public/data/' + req.params.api + '.json', function(err, data) {
+      if (err) {
+        handleError(err);
+      } else {
+        res.json(data);
+      }
+    });
+  }
 });
 
 // Only listen on $ node app.js
