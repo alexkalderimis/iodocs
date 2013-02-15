@@ -7,7 +7,7 @@
 export PATH := $(PATH):$(shell find node_modules -name 'bin' -printf %p:)node_modules/.bin
 
 deps:
-	npm install
+	npm install ukraine
 
 deploy: deps
 	chernobyl deploy labs.intermine.org .
