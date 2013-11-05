@@ -331,6 +331,7 @@
         // Complete, runs on error and success
         .complete(function(result, text) {
             var response = JSON.parse(result.responseText);
+            var isAuthError;
 
             if (response.call) {
                 $('pre.call', resultContainer)
@@ -340,6 +341,8 @@
             if (response.code) {
                 $('pre.code', resultContainer)
                     .text(response.code);
+                isAuthError = response.code == 401 || response.code == 403;
+                $('.credentials .control-group').toggleClass('error', isAuthError);
             }
 
             if (response.headers) {
