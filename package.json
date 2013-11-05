@@ -26,10 +26,11 @@
     "jade": "0.28.1",
     "oauth": "0.9.3",
     "querystring": "0.1.0",
-    "require-jade": "0.0.1",
+    "require-jade": "0.0.1"
+  },
+  "devDependencies": {
     "ukraine": "latest"
   },
-  "devDependencies": {},
   "main": "index",
   "scripts": {
     "start": "app.js"
