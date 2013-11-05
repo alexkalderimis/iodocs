@@ -2,8 +2,20 @@
     "demomine": {
         "name": "Test-Data Mine",
         "protocol": "http",
-        "baseURL": "demo.intermine.org",
+        "baseURL": "bc:8081",
         "publicPath": "/intermine-test-dev/service",
+        "version": "/version",
+        "auth": "key",
+        "intermine": true,
+        "keyParam": "token",
+        "booleanTrueVal": "true",
+        "booleanFalseVal": "false"
+    },
+    "flymine": {
+        "name": "FlyMine",
+        "protocol": "http",
+        "baseURL": "www.flymine.org",
+        "publicPath": "/query/service",
         "version": "/version",
         "auth": "key",
         "intermine": true,
