@@ -12,6 +12,12 @@ deps:
 deploy: deps
 	chernobyl deploy labs.intermine.org .
 
+style:
+	compass compile --sass-dir public/stylesheets/scss/ --css-dir public/stylesheets/
+
+run: style
+	node app.js
+
 test:
 	@echo No Tests!
 
