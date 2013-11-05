@@ -26,11 +26,17 @@ $delete: #f5e8e8;
     }
 }
 
+@font-face {
+    font-family: DroidSansMono;
+    /* Prefer local to fetching from web-fonts. */
+    src: local("Droid Sans Mono"), url(http://fonts.googleapis.com/css?family=Droid+Sans+Mono);
+}
+
 /*
   font-family for monospace
 */
 @mixin monospace() {
-    font-family: 'Droid Sans', 'Inconsolata', 'Monaco', 'Consolas', 'Bitstream Vera Mono', monospace;
+    font-family: 'DroidSansMono', 'Inconsolata', 'Monaco', 'Consolas', 'Bitstream Vera Mono', monospace;
 }
 
 html,body,div,span,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,abbr,address,cite,code,del,dfn,em,img,ins,kbd,
@@ -46,6 +52,25 @@ th,td,article,aside,canvas,details,figcaption,figure,footer,header,hgroup,menu,n
 
 article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section {
   display: block;
+}
+
+.main {
+    background: #fefefe;
+    @include box-shadow(5px, 0, 5px, #f00);
+    padding-top: 135px;
+}
+
+.since {
+    color: #7a7a7a;
+}
+
+@mixin header-box {
+    padding: 15px;
+    margin: 10px;
+}
+
+.service {
+    @include header-box;
 }
 
 blockquote,q {
@@ -317,7 +342,7 @@ li {
     border: 1px solid darken(#f4f4e1, 30%);
     @include border-radius(5px);
     @include clearfix;
-    padding: 15px;
+    @include header-box;
 
     h2 img {
         margin-left: 10px;
@@ -365,10 +390,35 @@ li {
     }
 }
 
+.select-all, .clear-results {
+    margin-left: 1em;
+}
+
+form.custom {
+
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 2em;
+    background: #C6DCE4; 
+    border: 1px solid #ccc;
+
+}
+
 .endpoint {
     margin: 0;
-    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #ccc;
     @include clearfix;
+
+    & > .name {
+        font-size: 18px;
+    }
+
+    .uri {
+        @include monospace();
+        font-size: 0.90em;
+    }
 
     & > .title {
         padding: 20px 0 10px;
@@ -398,10 +448,6 @@ li {
             }
         }
     }
-}
-
-.methods {
-    display: none;
 }
 
 .method {
@@ -435,7 +481,7 @@ li {
         }
 
         .name {
-            font-size: 16px;
+            font-size: 15px;
         }
 
         .description {
@@ -616,6 +662,7 @@ li {
 .clearfix {
   zoom: 1;
 }
+
 
 @media all and (orientation:portrait) {
 }

@@ -5,10 +5,16 @@
 /*
   Setting colors for a method container, the form, and http method indicator
 */
+@font-face {
+  font-family: DroidSansMono;
+  /* Prefer local to fetching from web-fonts. */
+  src: local("Droid Sans Mono"), url(http://fonts.googleapis.com/css?family=Droid+Sans+Mono);
+}
+
 /*
   font-family for monospace
 */
-/* line 38, scss/style.scss */
+/* line 44, scss/style.scss */
 html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, abbr, address, cite, code, del, dfn, em, img, ins, kbd,
 q, samp, small, strong, sub, sup, var, b, i, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr,
 th, td, article, aside, canvas, details, figcaption, figure, footer, header, hgroup, menu, nav, section, summary, time, mark, audio, video {
@@ -20,30 +26,50 @@ th, td, article, aside, canvas, details, figcaption, figure, footer, header, hgr
   vertical-align: baseline;
 }
 
-/* line 47, scss/style.scss */
+/* line 53, scss/style.scss */
 article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
   display: block;
 }
 
-/* line 51, scss/style.scss */
+/* line 57, scss/style.scss */
+.main {
+  background: #fefefe;
+  -webkit-box-shadow: 5px, 0, 5px, red;
+  -moz-box-shadow: 5px, 0, 5px, red;
+  box-shadow: 5px, 0, 5px, red;
+  padding-top: 135px;
+}
+
+/* line 63, scss/style.scss */
+.since {
+  color: #7a7a7a;
+}
+
+/* line 72, scss/style.scss */
+.service {
+  padding: 15px;
+  margin: 10px;
+}
+
+/* line 76, scss/style.scss */
 blockquote, q {
   quotes: none;
 }
 
-/* line 55, scss/style.scss */
+/* line 80, scss/style.scss */
 blockquote:before, blockquote:after, q:before, q:after {
   content: "";
   content: none;
 }
 
-/* line 60, scss/style.scss */
+/* line 85, scss/style.scss */
 ins {
   background-color: #ff9;
   color: #000;
   text-decoration: none;
 }
 
-/* line 66, scss/style.scss */
+/* line 91, scss/style.scss */
 mark {
   background-color: #ff9;
   color: #000;
@@ -51,47 +77,47 @@ mark {
   font-weight: bold;
 }
 
-/* line 73, scss/style.scss */
+/* line 98, scss/style.scss */
 del {
   text-decoration: line-through;
 }
 
-/* line 78, scss/style.scss */
+/* line 103, scss/style.scss */
 abbr[title],
 dfn[title] {
   border-bottom: 1px dotted;
   cursor: help;
 }
 
-/* line 83, scss/style.scss */
+/* line 108, scss/style.scss */
 table {
   border-collapse: collapse;
   border-spacing: 0;
 }
 
-/* line 88, scss/style.scss */
+/* line 113, scss/style.scss */
 hr {
   display: block;
   height: 1px;
   border: 0;
-  border-top: 1px solid #cccccc;
+  border-top: 1px solid #ccc;
   margin: 1em 0;
   padding: 0;
 }
 
-/* line 98, scss/style.scss */
+/* line 123, scss/style.scss */
 input,
 select {
   vertical-align: middle;
 }
 
-/* line 102, scss/style.scss */
+/* line 127, scss/style.scss */
 body {
-  font: 13px/1.231 sans-serif;
+  font: 13px / 1.231 sans-serif;
   *font-size: small;
 }
 
-/* line 110, scss/style.scss */
+/* line 135, scss/style.scss */
 select,
 input,
 textarea,
@@ -99,7 +125,7 @@ button {
   font: 99% sans-serif;
 }
 
-/* line 117, scss/style.scss */
+/* line 142, scss/style.scss */
 pre,
 code,
 kbd,
@@ -107,46 +133,46 @@ samp {
   font-family: monospace, sans-serif;
 }
 
-/* line 121, scss/style.scss */
+/* line 146, scss/style.scss */
 html {
   overflow-y: scroll;
 }
 
-/* line 125, scss/style.scss */
+/* line 150, scss/style.scss */
 a:link {
   -webkit-tap-highlight-color: #ff5e99;
 }
 
-/* line 130, scss/style.scss */
+/* line 155, scss/style.scss */
 a:hover,
 a:active {
   outline: none;
 }
 
-/* line 136, scss/style.scss */
+/* line 161, scss/style.scss */
 a,
 a:active,
 a:visited {
   color: #607890;
 }
 
-/* line 140, scss/style.scss */
+/* line 165, scss/style.scss */
 a:hover {
   color: #036;
 }
 
-/* line 145, scss/style.scss */
+/* line 170, scss/style.scss */
 ul,
 ol {
   margin-left: 2em;
 }
 
-/* line 149, scss/style.scss */
+/* line 174, scss/style.scss */
 ol {
   list-style-type: decimal;
 }
 
-/* line 154, scss/style.scss */
+/* line 179, scss/style.scss */
 nav ul,
 nav li {
   margin: 0;
@@ -154,23 +180,23 @@ nav li {
   list-style-image: none;
 }
 
-/* line 160, scss/style.scss */
+/* line 185, scss/style.scss */
 small {
   font-size: 85%;
 }
 
-/* line 165, scss/style.scss */
+/* line 190, scss/style.scss */
 strong,
 th {
   font-weight: bold;
 }
 
-/* line 169, scss/style.scss */
+/* line 194, scss/style.scss */
 td {
   vertical-align: top;
 }
 
-/* line 174, scss/style.scss */
+/* line 199, scss/style.scss */
 sub,
 sup {
   font-size: 75%;
@@ -178,17 +204,17 @@ sup {
   position: relative;
 }
 
-/* line 180, scss/style.scss */
+/* line 205, scss/style.scss */
 sup {
   top: -0.5em;
 }
 
-/* line 184, scss/style.scss */
+/* line 209, scss/style.scss */
 sub {
   bottom: -0.25em;
 }
 
-/* line 188, scss/style.scss */
+/* line 213, scss/style.scss */
 pre {
   white-space: pre;
   white-space: pre-wrap;
@@ -196,33 +222,33 @@ pre {
   padding: 15px;
 }
 
-/* line 196, scss/style.scss */
+/* line 221, scss/style.scss */
 .ie6 legend,
 .ie7 legend {
   margin-left: -7px;
 }
 
-/* line 200, scss/style.scss */
+/* line 225, scss/style.scss */
 input[type="radio"] {
   vertical-align: text-bottom;
 }
 
-/* line 204, scss/style.scss */
+/* line 229, scss/style.scss */
 input[type="checkbox"] {
   vertical-align: bottom;
 }
 
-/* line 208, scss/style.scss */
+/* line 233, scss/style.scss */
 .ie7 input[type="checkbox"] {
   vertical-align: baseline;
 }
 
-/* line 212, scss/style.scss */
+/* line 237, scss/style.scss */
 .ie6 input {
   vertical-align: text-bottom;
 }
 
-/* line 220, scss/style.scss */
+/* line 245, scss/style.scss */
 label,
 input[type="button"],
 input[type="submit"],
@@ -231,7 +257,7 @@ button {
   cursor: pointer;
 }
 
-/* line 227, scss/style.scss */
+/* line 252, scss/style.scss */
 button,
 input,
 select,
@@ -241,19 +267,19 @@ textarea {
   margin: 0;
 }
 
-/* line 233, scss/style.scss */
+/* line 258, scss/style.scss */
 textarea {
   overflow: auto;
 }
 
-/* line 238, scss/style.scss */
+/* line 263, scss/style.scss */
 input::-moz-focus-inner,
 button::-moz-focus-inner {
   border: 0;
   padding: 0;
 }
 
-/* line 244, scss/style.scss */
+/* line 269, scss/style.scss */
 input:invalid,
 textarea:invalid {
   -webkit-border-radius: 1px;
@@ -266,82 +292,82 @@ textarea:invalid {
   box-shadow: 0, 0, 5px, red;
 }
 
-/* line 250, scss/style.scss */
+/* line 275, scss/style.scss */
 .no-boxshadow input:invalid,
 .no-boxshadow textarea:invalid {
   background-color: #f0dddd;
 }
 
-/* line 254, scss/style.scss */
+/* line 279, scss/style.scss */
 ::-moz-selection {
   background: #ff5e99;
   color: #fff;
   text-shadow: none;
 }
 
-/* line 260, scss/style.scss */
+/* line 285, scss/style.scss */
 ::selection {
   background: #ff5e99;
   color: #fff;
   text-shadow: none;
 }
 
-/* line 266, scss/style.scss */
+/* line 291, scss/style.scss */
 .ie7 img {
   -ms-interpolation-mode: bicubic;
 }
 
-/* line 276, scss/style.scss */
+/* line 301, scss/style.scss */
 body,
 select,
 input,
 textarea {
   color: #444;
-  font-family: "Roboto", Helvetica, Arial, sans-serif;
+  font-family: 'Roboto', Helvetica, Arial, sans-serif;
 }
 
-/* line 281, scss/style.scss */
+/* line 306, scss/style.scss */
 h1, h2, h3, h4, h5, h6 {
   font-weight: bold;
 }
 
-/* line 285, scss/style.scss */
+/* line 310, scss/style.scss */
 html {
   height: 100%;
 }
 
-/* line 289, scss/style.scss */
+/* line 314, scss/style.scss */
 body {
   max-width: 960px;
   margin: 15px auto;
 }
 
-/* line 294, scss/style.scss */
+/* line 319, scss/style.scss */
 h1 {
   font-size: 24px;
   line-height: 1.5;
   margin-bottom: 15px;
 }
 
-/* line 300, scss/style.scss */
+/* line 325, scss/style.scss */
 h2 {
   font-weight: normal;
   font-size: 18px;
   margin-bottom: 15px;
 }
 
-/* line 306, scss/style.scss */
+/* line 331, scss/style.scss */
 ul {
   margin: 0;
 }
 
-/* line 310, scss/style.scss */
+/* line 335, scss/style.scss */
 li {
   list-style: none;
   margin-left: 0;
 }
 
-/* line 315, scss/style.scss */
+/* line 340, scss/style.scss */
 .credentials {
   background-color: #f4f4e1;
   border: 1px solid #cbcb71;
@@ -353,103 +379,124 @@ li {
   overflow: hidden;
   *zoom: 1;
   padding: 15px;
+  margin: 10px;
 }
-/* line 322, scss/style.scss */
+/* line 347, scss/style.scss */
 .credentials h2 img {
   margin-left: 10px;
 }
-/* line 326, scss/style.scss */
+/* line 351, scss/style.scss */
 .credentials div {
   float: left;
   margin-right: 15px;
 }
-/* line 331, scss/style.scss */
+/* line 356, scss/style.scss */
 .credentials label {
   font-weight: bold;
   display: block;
   margin-bottom: 3px;
 }
-/* line 337, scss/style.scss */
+/* line 362, scss/style.scss */
 .credentials input {
   width: 200px;
 }
 
-/* line 342, scss/style.scss */
+/* line 367, scss/style.scss */
 #controls {
   overflow: hidden;
   *zoom: 1;
   margin-top: 10px;
-  border: 1px solid #999999;
+  border: 1px solid #999;
   border-width: 1px 0;
   padding: 10px 0;
 }
-/* line 349, scss/style.scss */
+/* line 374, scss/style.scss */
 #controls li {
   padding-right: 10px;
   float: left;
 }
-/* line 353, scss/style.scss */
+/* line 378, scss/style.scss */
 #controls li:not(:first-child) {
   padding-left: 10px;
-  border-left: 1px solid #dddddd;
+  border-left: 1px solid #ddd;
 }
 
-/* line 360, scss/style.scss */
+/* line 385, scss/style.scss */
 .api {
   margin-bottom: 1em;
 }
-/* line 363, scss/style.scss */
+/* line 388, scss/style.scss */
 .api h1 {
-  font-family: "Roboto Condensed", "Roboto", "Helvetica", "Arial", sans-serif;
+  font-family: 'Roboto Condensed', 'Roboto', 'Helvetica', 'Arial', sans-serif;
 }
 
-/* line 368, scss/style.scss */
+/* line 393, scss/style.scss */
+.select-all, .clear-results {
+  margin-left: 1em;
+}
+
+/* line 397, scss/style.scss */
+form.custom {
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 2em;
+  background: #C6DCE4;
+  border: 1px solid #ccc;
+}
+
+/* line 408, scss/style.scss */
 .endpoint {
   margin: 0;
-  border-bottom: 1px solid #eeeeee;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ccc;
   overflow: hidden;
   *zoom: 1;
 }
-/* line 373, scss/style.scss */
+/* line 414, scss/style.scss */
+.endpoint > .name {
+  font-size: 18px;
+}
+/* line 418, scss/style.scss */
+.endpoint .uri {
+  font-family: 'DroidSansMono', 'Inconsolata', 'Monaco', 'Consolas', 'Bitstream Vera Mono', monospace;
+  font-size: 0.90em;
+}
+/* line 423, scss/style.scss */
 .endpoint > .title {
   padding: 20px 0 10px;
   overflow: hidden;
   *zoom: 1;
 }
-/* line 377, scss/style.scss */
+/* line 427, scss/style.scss */
 .endpoint > .title .name {
   font-size: 18px;
   float: left;
 }
-/* line 381, scss/style.scss */
+/* line 431, scss/style.scss */
 .endpoint > .title .name:hover {
   cursor: pointer;
   text-decoration: underline;
 }
-/* line 387, scss/style.scss */
+/* line 437, scss/style.scss */
 .endpoint > .title .actions {
   float: right;
 }
-/* line 390, scss/style.scss */
+/* line 440, scss/style.scss */
 .endpoint > .title .actions li {
   float: left;
   padding: 0 10px;
-  border-left: 1px solid #dddddd;
+  border-left: 1px solid #ddd;
 }
-/* line 396, scss/style.scss */
+/* line 446, scss/style.scss */
 .endpoint > .title .actions li:first-child {
   border: 0;
 }
 
-/* line 403, scss/style.scss */
-.methods {
-  display: none;
-}
-
-/* line 407, scss/style.scss */
+/* line 453, scss/style.scss */
 .method {
   font-size: 14px;
-  border: 1px solid #eeeeee;
+  border: 1px solid #eee;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   -ms-border-radius: 5px;
@@ -462,7 +509,7 @@ li {
           background-position: 7px 50%;
       }*/
 }
-/* line 413, scss/style.scss */
+/* line 459, scss/style.scss */
 .method .title {
   overflow: hidden;
   -webkit-border-radius: 5px;
@@ -471,43 +518,43 @@ li {
   -o-border-radius: 5px;
   border-radius: 5px;
 }
-/* line 417, scss/style.scss */
+/* line 463, scss/style.scss */
 .method .title:hover {
   background-color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
 }
-/* line 421, scss/style.scss */
+/* line 467, scss/style.scss */
 .method .title:hover span {
   text-decoration: underline;
 }
-/* line 424, scss/style.scss */
+/* line 470, scss/style.scss */
 .method .title:hover span.http-method {
   text-decoration: none;
 }
-/* line 431, scss/style.scss */
+/* line 477, scss/style.scss */
 .method .title span {
   margin: 0 10px 0;
   line-height: 33px;
   float: left;
 }
-/* line 437, scss/style.scss */
+/* line 483, scss/style.scss */
 .method .title .name {
-  font-size: 16px;
+  font-size: 15px;
 }
-/* line 441, scss/style.scss */
+/* line 487, scss/style.scss */
 .method .title .description {
   float: right;
   font-size: 12px;
   text-align: right;
 }
-/* line 447, scss/style.scss */
+/* line 493, scss/style.scss */
 .method .title .http-method {
   padding: 0 10px;
   width: 40px;
   font-size: 12px;
   text-align: center;
   margin: 0;
-  font-family: "Droid Sans", "Inconsolata", "Monaco", "Consolas", "Bitstream Vera Mono", monospace;
+  font-family: 'DroidSansMono', 'Inconsolata', 'Monaco', 'Consolas', 'Bitstream Vera Mono', monospace;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   -ms-border-radius: 5px;
@@ -517,81 +564,81 @@ li {
   line-height: 33px;
   float: left;
 }
-/* line 461, scss/style.scss */
+/* line 507, scss/style.scss */
 .method h3.request-body {
   margin-top: 1em;
   margin-bottom: 1em;
 }
-/* line 466, scss/style.scss */
+/* line 512, scss/style.scss */
 .method select.body-format {
   display: block;
 }
-/* line 471, scss/style.scss */
+/* line 517, scss/style.scss */
 .method .body-schema,
 .method span.body-format {
-  border: 1px solid #cccccc;
+  border: 1px solid #ccc;
   padding: 0.5em;
   font-family: monospace;
 }
-/* line 478, scss/style.scss */
+/* line 524, scss/style.scss */
 .method textarea.param,
 .method textarea.body-content {
   font-family: monospace;
 }
-/* line 483, scss/style.scss */
+/* line 529, scss/style.scss */
 .method td.parameter input, .method td.parameter textarea {
   width: 95%;
 }
-/* line 495, scss/style.scss */
+/* line 541, scss/style.scss */
 .method form {
   clear: both;
   padding: 15px;
   display: none;
 }
-/* line 501, scss/style.scss */
+/* line 547, scss/style.scss */
 .method table {
   margin-bottom: 15px;
   width: 100%;
 }
-/* line 506, scss/style.scss */
+/* line 552, scss/style.scss */
 .method tr.required {
   font-weight: bold;
 }
-/* line 510, scss/style.scss */
+/* line 556, scss/style.scss */
 .method th {
   font-weight: bold;
   text-align: left;
 }
-/* line 515, scss/style.scss */
+/* line 561, scss/style.scss */
 .method th, .method td {
   padding: 5px;
   vertical-align: middle;
 }
-/* line 520, scss/style.scss */
+/* line 566, scss/style.scss */
 .method td, .method pre {
-  font-family: "Droid Sans", "Inconsolata", "Monaco", "Consolas", "Bitstream Vera Mono", monospace;
+  font-family: 'DroidSansMono', 'Inconsolata', 'Monaco', 'Consolas', 'Bitstream Vera Mono', monospace;
 }
-/* line 524, scss/style.scss */
+/* line 570, scss/style.scss */
 .method h2 {
   margin-top: 15px;
   margin-bottom: 3px;
 }
-/* line 529, scss/style.scss */
+/* line 575, scss/style.scss */
 .method pre {
   font-size: 12px;
   overflow: auto;
   border: 1px solid rgba(0, 0, 0, 0.2);
   background-color: rgba(255, 255, 255, 0.4);
 }
-/* line 535, scss/style.scss */
+/* line 581, scss/style.scss */
 .method pre.response {
   max-height: 500px;
 }
-/* line 539, scss/style.scss */
+/* line 585, scss/style.scss */
 .method pre.error {
   background-color: rgba(255, 66, 66, 0.2);
 }
-/* line 544, scss/style.scss */
+/* line 590, scss/style.scss */
 .method .try-it {
   border: none;
   display: inline-block;
@@ -606,7 +653,7 @@ li {
   border-bottom: 1px solid rgba(0, 0, 0, 0.25);
   border-radius: 5px;
 }
-/* line 559, scss/style.scss */
+/* line 605, scss/style.scss */
 .method .try-it:hover {
   background-color: #ff7200;
 }
@@ -667,7 +714,7 @@ li {
   border-bottom: 1px solid #d6a1a1;
 }
 
-/* line 570, scss/style.scss */
+/* line 616, scss/style.scss */
 .ir {
   display: block;
   text-indent: -999em;
@@ -677,7 +724,7 @@ li {
   direction: ltr;
 }
 
-/* line 579, scss/style.scss */
+/* line 625, scss/style.scss */
 .visuallyhidden {
   border: 0;
   clip: rect(0 0 0 0);
@@ -689,7 +736,7 @@ li {
   width: 1px;
 }
 
-/* line 591, scss/style.scss */
+/* line 637, scss/style.scss */
 .visuallyhidden.focusable:active,
 .visuallyhidden.focusable:focus {
   clip: auto;
@@ -700,12 +747,12 @@ li {
   width: auto;
 }
 
-/* line 600, scss/style.scss */
+/* line 646, scss/style.scss */
 .invisible {
   visibility: hidden;
 }
 
-/* line 605, scss/style.scss */
+/* line 651, scss/style.scss */
 .clearfix:before,
 .clearfix:after {
   content: "\0020";
@@ -714,18 +761,18 @@ li {
   overflow: hidden;
 }
 
-/* line 612, scss/style.scss */
+/* line 658, scss/style.scss */
 .clearfix:after {
   clear: both;
 }
 
-/* line 616, scss/style.scss */
+/* line 662, scss/style.scss */
 .clearfix {
   zoom: 1;
 }
 
 @media print {
-  /* line 630, scss/style.scss */
+  /* line 677, scss/style.scss */
   * {
     background: transparent !important;
     color: black !important;
@@ -735,41 +782,41 @@ li {
   }
 
   /* Black prints faster: sanbeiji.com/archives/953 */
-  /* line 633, scss/style.scss */
+  /* line 680, scss/style.scss */
   a, a:visited {
-    color: #444444 !important;
+    color: #444 !important;
     text-decoration: underline;
   }
 
-  /* line 635, scss/style.scss */
+  /* line 682, scss/style.scss */
   a[href]:after {
     content: " (" attr(href) ")";
   }
 
-  /* line 637, scss/style.scss */
+  /* line 684, scss/style.scss */
   abbr[title]:after {
     content: " (" attr(title) ")";
   }
 
-  /* line 639, scss/style.scss */
+  /* line 686, scss/style.scss */
   .ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after {
     content: "";
   }
 
   /* Don't show links for images, or javascript/internal links */
-  /* line 641, scss/style.scss */
+  /* line 688, scss/style.scss */
   pre, blockquote {
-    border: 1px solid #999999;
+    border: 1px solid #999;
     page-break-inside: avoid;
   }
 
-  /* line 643, scss/style.scss */
+  /* line 690, scss/style.scss */
   thead {
     display: table-header-group;
   }
 
   /* css-discuss.incutio.com/wiki/Printing_Tables */
-  /* line 645, scss/style.scss */
+  /* line 692, scss/style.scss */
   tr, img {
     page-break-inside: avoid;
   }
@@ -778,13 +825,13 @@ li {
     margin: 0.5cm;
 }
 
-  /* line 649, scss/style.scss */
+  /* line 696, scss/style.scss */
   p, h2, h3 {
     orphans: 3;
     widows: 3;
   }
 
-  /* line 651, scss/style.scss */
+  /* line 698, scss/style.scss */
   h2, h3 {
     page-break-after: avoid;
   }
