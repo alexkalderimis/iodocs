@@ -1,0 +1,46 @@
+// views/custom
+
+h1 Add a custom API
+
+div.constainer-fluid
+
+  if error
+    div.error
+      p #{ error }
+
+  form.form-horizontal.custom(method='POST')
+
+    .control-group
+      label.control-label(for='slug')
+        span Name
+      .controls
+        input(type='text', name='slug')
+    .control-group
+      label.control-label(for='name')
+        span Description
+      .controls
+        input(type='text', name='name')
+    .control-group
+      label.control-label
+        span URI
+      .controls
+        .input-prepend.input-append
+          span.add-on http://
+          input.span3(type='text', name='baseURL')
+          span.add-on /
+          input.span3(type='text', name='publicPath')
+    input(type='hidden', name='protocol', value='http')
+    input(type='hidden', name='version', value='/version')
+    input(type='hidden', name='auth', value='key')
+    input(type='hidden', name='intermine', value='true')
+    input(type='hidden', name='keyParam', value='token')
+    input(type='hidden', name='booleanTrueVal', value='true')
+    input(type='hidden', name='booleanFalseVal', value='false')
+
+    input(type='submit', value='add')
+
+
+
+
+
+// end views/custom

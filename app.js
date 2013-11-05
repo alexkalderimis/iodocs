@@ -119,6 +119,10 @@ fs.readFile('public/data/apiconfig.json', 'utf-8', function(err, data) {
 
 });
 
+//var sass = require('node-sass');
+//var compass = require('node-compass');
+
+
 var app = module.exports = express.createServer();
 
 //if (process.env.REDISTOGO_URL) {
@@ -145,8 +149,17 @@ app.configure(function() {
         //})
     }));
 
+    /*
+    app.use(compass({
+      sass: __dirname + '/public/stylesheets/scss',
+      css: __dirname + '/public/stylesheets',
+      debug: true
+    }));
+    */
+
     app.use(app.router);
 
+    app.use(express.static(__dirname + '/components'));
     app.use(express.static(__dirname + '/public'));
 });
 
@@ -755,6 +768,40 @@ app.get('/authSuccess/:api', oauthSuccess, function(req, res) {
 app.post('/upload', function(req, res) {
   console.log(req.body.user);
   res.redirect('back');
+});
+
+app.get('/custom', function(req, res) {
+  res.render('custom', {error: null});
+});
+
+app.post('/custom', function(req, res) {
+  var api = req.body;
+  var name = api.name;
+  var slug = api.slug;
+  api.publicPath = '/' + api.publicPath;
+  var uri = api.protocol + "://" + api.baseURL + api.publicPath;
+  console.log("Fetching service listing from " + uri);
+  var fetching = http.get(uri, function(response) {
+      var buff = "";
+      response.on('data', function(chunk) { buff += chunk; });
+      response.on('error', handleError);
+      response.on('end', function() {
+          console.log("Retrieved service listing for " + name);
+          try {
+              imAPIs[slug] = JSON.parse(buff);
+              apisConfig[slug] = api;
+              res.redirect('/' + slug);
+          } catch (e) {
+              var msg = "Error parsing service listing for " + name + ": " + e;
+              handleError(msg);
+          }
+      });
+  });
+  fetching.on('error', handleError);
+
+  function handleError (err) {
+    res.render('custom', {error: err});
+  }
 });
 
 // API shortname, all lowercase
