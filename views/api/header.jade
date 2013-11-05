@@ -1,8 +1,13 @@
-div.api
-  h1=apiInfo.name 
+.api.navbar.navbar-fixed-top
+  .navbar-inner
+    .row-fluid
+      .service.span4
+        h1=apiInfo.name 
 
-  if apiInfo.version
-    span API version:
-    a.version(href="#{apiInfo.protocol}://#{apiInfo.baseURL}#{apiInfo.publicPath}/#{apiInfo.version}")
-      | ???
+        if apiInfo.version
+          span API version:
+          a.version(href="#{apiInfo.protocol}://#{apiInfo.baseURL}#{apiInfo.publicPath}/#{apiInfo.version}")
+            | ???
+      .span6
+        include ../credentials
 
