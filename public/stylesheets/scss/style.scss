@@ -26,6 +26,12 @@ $delete: #f5e8e8;
     }
 }
 
+@mixin centered($width) {
+    width: $width;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 @font-face {
     font-family: DroidSansMono;
     /* Prefer local to fetching from web-fonts. */
@@ -335,6 +341,29 @@ ul {
 li {
     list-style: none;
     margin-left: 0;
+}
+
+.api-list {
+    list-style-type: none;
+    @include centered(80%);
+    @include clearfix;
+
+    li {
+        margin: 0.5em;
+        padding: 2em;
+        border: 1px solid #ccc;
+        display: inline-block;
+        a {
+            font-size: 2em;
+        }
+    }
+    li:hover {
+        background: #4A9CC5;
+
+        a {
+            color: white;
+        }
+    }
 }
 
 .credentials {

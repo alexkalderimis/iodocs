@@ -2,6 +2,9 @@ h1=title
 
 h2 Choose an API
 
-ul
+ul.api-list
    - for (var api in apiInfo)
-       li: a(href = '/' + api) #{apiInfo[api].name}
+     li
+       a(href = '/' + api) #{apiInfo[api].name}
+
+a.btn.large(href = 'custom') Add a web-service.
