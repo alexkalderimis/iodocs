@@ -23,6 +23,42 @@
         "booleanTrueVal": "true",
         "booleanFalseVal": "false"
     },
+    "sgd": {
+        "name": "YeastMine",
+        "protocol": "http",
+        "baseURL": "yeastmine.yeastgenome.org",
+        "publicPath": "/yeastmine/service",
+        "version": "/version",
+        "auth": "key",
+        "intermine": true,
+        "keyParam": "token",
+        "booleanTrueVal": "true",
+        "booleanFalseVal": "false"
+    },
+    "mgi": {
+        "name": "MouseMine",
+        "protocol": "http",
+        "baseURL": "www.mousemine.org",
+        "publicPath": "/mousemine/service",
+        "version": "/version",
+        "auth": "key",
+        "intermine": true,
+        "keyParam": "token",
+        "booleanTrueVal": "true",
+        "booleanFalseVal": "false"
+    },
+    "modmine": {
+        "name": "modMine",
+        "protocol": "http",
+        "baseURL": "intermine.modencode.org",
+        "publicPath": "/modminetest/service",
+        "version": "/version",
+        "auth": "key",
+        "intermine": true,
+        "keyParam": "token",
+        "booleanTrueVal": "true",
+        "booleanFalseVal": "false"
+    },
     "flymine-beta": {
         "name": "FlyMine-Beta",
         "protocol": "http",
