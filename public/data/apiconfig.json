@@ -23,6 +23,18 @@
         "booleanTrueVal": "true",
         "booleanFalseVal": "false"
     },
+    "rgd": {
+        "name": "RatMine",
+        "protocol": "http",
+        "baseURL": "ratmine.mcw.edu",
+        "publicPath": "/ratmine/service",
+        "version": "/version",
+        "auth": "key",
+        "intermine": true,
+        "keyParam": "token",
+        "booleanTrueVal": "true",
+        "booleanFalseVal": "false"
+    },
     "sgd": {
         "name": "YeastMine",
         "protocol": "http",
