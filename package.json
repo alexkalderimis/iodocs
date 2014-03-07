@@ -2,7 +2,7 @@
   "name": "iodocs",
   "version": "0.0.1",
   "description": "Live API Documentation and Browsing",
-  "homepage": "http://mashery.com",
+  "homepage": "http://labs.intermine.org",
   "keywords": [
     "livedocs",
     "iodocs",
@@ -19,7 +19,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/mashery/iodocs.git"
+    "url": "git://github.com/alexkalderimis/iodocs.git"
   },
   "dependencies": {
     "express": "2.5.8",
@@ -30,7 +30,7 @@
     "winston": "~0.7.2"
   },
   "devDependencies": {},
-  "main": "index",
+  "main": "app",
   "scripts": {
     "start": "node app.js"
   },
