@@ -26,14 +26,13 @@
     "jade": "0.28.1",
     "oauth": "0.9.3",
     "querystring": "0.1.0",
-    "require-jade": "0.0.1"
+    "require-jade": "0.0.1",
+    "winston": "~0.7.2"
   },
-  "devDependencies": {
-    "ukraine": "latest"
-  },
+  "devDependencies": {},
   "main": "index",
   "scripts": {
-    "start": "app.js"
+    "start": "node app.js"
   },
   "engines": {
     "node": ">= 0.4.0"

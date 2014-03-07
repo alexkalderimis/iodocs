@@ -800,8 +800,14 @@ form.custom {
   zoom: 1;
 }
 
+/* line 695, scss/style.scss */
+.autocomplete-selected {
+  background: #0061ac;
+  color: white;
+}
+
 @media print {
-  /* line 706, scss/style.scss */
+  /* line 710, scss/style.scss */
   * {
     background: transparent !important;
     color: black !important;
@@ -811,41 +817,41 @@ form.custom {
   }
 
   /* Black prints faster: sanbeiji.com/archives/953 */
-  /* line 709, scss/style.scss */
+  /* line 713, scss/style.scss */
   a, a:visited {
     color: #444 !important;
     text-decoration: underline;
   }
 
-  /* line 711, scss/style.scss */
+  /* line 715, scss/style.scss */
   a[href]:after {
     content: " (" attr(href) ")";
   }
 
-  /* line 713, scss/style.scss */
+  /* line 717, scss/style.scss */
   abbr[title]:after {
     content: " (" attr(title) ")";
   }
 
-  /* line 715, scss/style.scss */
+  /* line 719, scss/style.scss */
   .ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after {
     content: "";
   }
 
   /* Don't show links for images, or javascript/internal links */
-  /* line 717, scss/style.scss */
+  /* line 721, scss/style.scss */
   pre, blockquote {
     border: 1px solid #999;
     page-break-inside: avoid;
   }
 
-  /* line 719, scss/style.scss */
+  /* line 723, scss/style.scss */
   thead {
     display: table-header-group;
   }
 
   /* css-discuss.incutio.com/wiki/Printing_Tables */
-  /* line 721, scss/style.scss */
+  /* line 725, scss/style.scss */
   tr, img {
     page-break-inside: avoid;
   }
@@ -854,13 +860,13 @@ form.custom {
     margin: 0.5cm;
 }
 
-  /* line 725, scss/style.scss */
+  /* line 729, scss/style.scss */
   p, h2, h3 {
     orphans: 3;
     widows: 3;
   }
 
-  /* line 727, scss/style.scss */
+  /* line 731, scss/style.scss */
   h2, h3 {
     page-break-after: avoid;
   }

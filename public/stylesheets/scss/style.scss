@@ -692,7 +692,11 @@ form.custom {
   zoom: 1;
 }
 
-
+.autocomplete-selected {
+    background: saturate(darken($get, 60%), 50%);
+    color: white;
+}
+    
 @media all and (orientation:portrait) {
 }
 

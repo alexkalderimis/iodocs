@@ -12,6 +12,8 @@ tr(id='param' + paramCount, class=className)
   td.name
     if '?' === parameter.Name
       input.variable-param(type = 'text')
+    else if parameter.Name.match(/\?/)
+      input.variable-param(type = 'text', value = parameter.Name)
     else
       | #{parameter.Name}
 
@@ -76,10 +78,15 @@ tr(id='param' + paramCount, class=className)
           placeholder = className,
           type = 'email')
       default
+        defVal = parameter.Default
+        if defVal && defVal.match('^/')
+          paramClass = paramClass + ' dynamic'
+          defVal = apiInfo.protocol + '://' + apiInfo.baseURL + apiInfo.publicPath + defVal
+          
         input(
           class = paramClass,
           name = 'params[' + parameter.Name + ']',
-          value = parameter.Default,
+          value = defVal,
           placeholder = className,
           type = 'text')
 

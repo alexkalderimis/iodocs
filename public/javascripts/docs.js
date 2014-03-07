@@ -25,6 +25,86 @@
         $(this.parentNode.parentNode).toggleClass('expanded')
     })
 
+    var dynSrcCache = {};
+    $('.parameter input.dynamic').each(function () {
+      $(this).autocomplete({
+        lookup: [],
+        beforeRender: function (container) {
+          $(container).addClass('dropdown-menu');
+        }
+      });
+    });
+
+    function resolveValue(prop, val) {
+      var m, filter;
+      if (val == null) return val;
+      if (m = prop.match(/{.*}/)) {
+        filter = m[0].replace(/[{}]/g, '').split('=');
+        prop = prop.replace(/{.*}/, '');
+      }
+      if (prop == '?') {
+        val = val[Object.keys(val)[0]];
+      } else {
+        val = val[prop];
+      }
+      if (filter && val) {
+        val = val.filter(function (v) { return v[filter[0]] == filter[1]; });
+      }
+      return val;
+    }
+
+    function updateDynamicValues() {
+      $('.parameter input.dynamic').each(function () {
+        var $e = $(this);
+        var command = this.defaultValue.split('|');
+        if (!command[0]) {
+          return;
+        }
+        var url = command[0] + '?format=json';
+        var apiKey = $('input[name=key]').val();
+        if (apiKey) {
+          url += '&token=' + apiKey;
+        }
+        var path = command[1] ? command[1].split('.') : [];
+
+        if (!dynSrcCache[url]) { // one request per url.
+          dynSrcCache[url] = $.get(url);
+        }
+        dynSrcCache[url].then(success, error);
+        
+        function success (data) {
+          var i, lookup, val = data;
+          $e.autocomplete('clear');
+          if (path.length == 3) {
+            lookup = resolveValue(path[0], data);
+          } else {
+            lookup = [];
+          }
+          if ('map' in lookup) {
+            lookup = lookup.map(function (elem) { return resolveValue(path[2], elem); });
+          } else {
+            lookup = Object.keys(lookup).map(function (k) {
+              return resolveValue(path[2], lookup[k]);
+            });
+          }
+          $e.autocomplete('setOptions', {lookup: lookup});
+          if (lookup.length) $e.autocomplete('enable');
+
+          for (i = 0; i < path.length; i++) {
+            val = resolveValue(path[i], val);
+          }
+          $e.val(val);
+        }
+        function error (err) {
+            console.error(err);
+            $e.val(null);
+        }
+      });
+    }
+    updateDynamicValues();
+
+    $('input[name=key]').change(updateDynamicValues);
+
     $('input.variable-param').change(function(event) {
       event.preventDefault();
       var nameInput = $(this);
@@ -207,18 +287,20 @@
       clone.find('td.parameter input').val('');
       // \u3003 is the ditto mark (〃).
       var td_name = clone.find('td.name');
+      clone.find('td.parameter input').attr({name: 'params[?]'});
       if (td_name.children('input').length) {
         td_name.children('input').val('');
       } else {
         td_name.text('\u3003');
       }
+      clone.find('.remove').remove();
+
       $('<button title="Remove parameter" class="remove">x</button>').prependTo(td_name).click(function(event) {
         event.preventDefault();
         clone.remove();
       });
       clone.find('td.type').text('\u3003');
       clone.find('td.description p').text('\u3003');
-      //clone.find('td.enabled ').text('\u3003');
       clone.insertAfter($tr);
       
     });
@@ -248,6 +330,7 @@
         // Exclude optional parameters with unchecked boxes.
         params = params.filter(function(p) {
           if (!p.name.match(/params/)) return true;
+          if (p.name.match(/\?/)) return false;
           var $chxbox = $('.provide-' + p.name.match(/params\[(.*)\]/)[1], self);
           return ($chxbox.length) ? $chxbox.is(':checked') : true;
         });

@@ -34,7 +34,9 @@ var express     = require('express'),
     url         = require('url'),
     http        = require('http'),
     https       = require('https'),
+    winston     = require('winston'),
     crypto      = require('crypto');
+
     //redis       = require('redis'),
     //RedisStore  = require('connect-redis')(express);
 
@@ -74,50 +76,71 @@ db.on("error", function(err) {
 });
 */
 
+var logger = new winston.Logger({
+  transports: [
+    new winston.transports.Console({
+      colorize: true,
+      level: 'warn'
+    }),
+    new winston.transports.File({
+      filename: "iodocs.log",
+      timestamp: true,
+      level: 'debug'}
+    )
+  ]
+});
+
 //
 // Load API Configs
 //
 var apisConfig;
 var imAPIs = {};
-fs.readFile('public/data/apiconfig.json', 'utf-8', function(err, data) {
-    var apiName;
-    if (err) throw err;
-    apisConfig = JSON.parse(data);
-    if (config.debug) {
-         console.log(util.inspect(apisConfig));
-    }
-    for (apiName in apisConfig) {
-        (function(name) {
-            var api, serviceListingURI;
-            api = apisConfig[name];
-            var handleError = function (e) {
-                console.log("Could not fetch service listing for " + name + ", " + e);
-                delete apisConfig[name];
-            };
-            if (api.intermine) {
-                serviceListingURI = api.protocol + "://" + api.baseURL + api.publicPath;
-                console.log("Fetching service listing from " + serviceListingURI);
-                var req = http.get(serviceListingURI, function(res) {
-                    var body = "";
-                    res.on('data', function(chunk) {
-                        body += chunk;
-                    });
-                    res.on('end', function() {
-                        console.log("Retrieved service listing for " + name);
-                        try {
-                            imAPIs[name] = JSON.parse(body);
-                        } catch (e) {
-                            var msg = "Error parsing service listing for " + name + ": " + e;
-                            handleError(new Error(msg));
-                        }
-                    });
-                });
-                req.on('error', handleError);
-            }
-        })(apiName);
-    }
 
-});
+function initAppConfig () {
+
+  fs.readFile('public/data/apiconfig.json', 'utf-8', function(err, data) {
+      var apiName;
+      if (err) throw err;
+      apisConfig = JSON.parse(data);
+      if (config.debug) {
+          logger.debug('API CONFIG: %j', apisConfig)
+      }
+      for (apiName in apisConfig) {
+          (function(name) {
+              var api, serviceListingURI;
+              api = apisConfig[name];
+              var handleError = function (e) {
+                  logger.log('warn', 'Could not fetch service listing for %s', name, e);
+                  delete apisConfig[name];
+              };
+              if (api.intermine) {
+                  serviceListingURI = api.protocol + "://" + api.baseURL + api.publicPath;
+                  console.log("Fetching service listing from " + serviceListingURI);
+                  var req = http.get(serviceListingURI, function(res) {
+                      var body = "";
+                      res.on('data', function(chunk) { body += chunk; });
+                      res.on('end', function() {
+                          logger.log('debug', "Retrieved service listing for %s", name);
+                          try {
+                              imAPIs[name] = JSON.parse(body);
+                          } catch (e) {
+                              var msg = "Error parsing service listing for " + name + ": " + e;
+                              handleError(new Error(msg));
+                          }
+                      });
+                  });
+                  req.on('error', handleError);
+              }
+          })(apiName);
+      }
+  });
+}
+
+// Init config now.
+initAppConfig();
+
+// Refresh config every five minutes.
+setInterval(initAppConfig, 5 * 60 * 1000);
 
 //var sass = require('node-sass');
 //var compass = require('node-compass');
@@ -132,10 +155,16 @@ var app = module.exports = express.createServer();
 //    config.redis.password = rtg.auth.split(":")[1];
 //}
 
+var winstonStream = {
+  write: function (message, encoding) {
+    winston.info(message.slice(0, -1));
+  }
+}
+
 app.configure(function() {
     app.set('views', __dirname + '/views');
     app.set('view engine', 'jade');
-    app.use(express.logger());
+    app.use(express.logger({stream: winstonStream}));
     app.use(express.bodyParser());
     app.use(express.methodOverride());
     app.use(express.cookieParser());
@@ -175,7 +204,7 @@ app.configure('production', function() {
 // Middleware
 //
 function oauth(req, res, next) {
-    console.log('OAuth process started');
+    logger.info('OAuth process started');
     var apiName = req.body.apiName,
         apiConfig = apisConfig[apiName];
 
@@ -339,7 +368,7 @@ function oauthSuccess(req, res, next) {
 //
 function processRequest(req, res, next) {
     if (config.debug) {
-        console.log(util.inspect(req.body, null, 3));
+        logger.log('Request body: ' + util.inspect(req.body, null, 3));
     };
 
     var reqQuery = req.body,
@@ -778,7 +807,7 @@ app.post('/custom', function(req, res) {
   var api = req.body;
   var name = api.name;
   var slug = api.slug;
-  api.publicPath = '/' + api.publicPath;
+  api.publicPath = '/' + api.publicPath + '/service';
   var uri = api.protocol + "://" + api.baseURL + api.publicPath;
   console.log("Fetching service listing from " + uri);
   var fetching = http.get(uri, function(response) {
@@ -789,12 +818,12 @@ app.post('/custom', function(req, res) {
           console.log("Retrieved service listing for " + name);
           try {
               imAPIs[slug] = JSON.parse(buff);
-              apisConfig[slug] = api;
-              res.redirect('/' + slug);
           } catch (e) {
-              var msg = "Error parsing service listing for " + name + ": " + e;
-              handleError(msg);
+              var msg = "Error parsing service listing for " + name + "(" + buff + "): " + e;
+              return handleError(msg);
           }
+          apisConfig[slug] = api;
+          res.redirect('/' + slug);
       });
   });
   fetching.on('error', handleError);
