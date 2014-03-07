@@ -1,16 +1,4 @@
 {
-    "testmodel": {
-        "name": "Test-Data Mine",
-        "protocol": "http",
-        "baseURL": "squirrel",
-        "publicPath": "/intermine-test/service",
-        "version": "/version",
-        "auth": "key",
-        "intermine": true,
-        "keyParam": "token",
-        "booleanTrueVal": "true",
-        "booleanFalseVal": "false"
-    },
     "demomine": {
         "name": "Test-Data Mine",
         "protocol": "http",
