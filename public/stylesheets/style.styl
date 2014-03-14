@@ -1,0 +1,179 @@
+@import url("http://fonts.googleapis.com/css?family=Sintony")
+@import url(http://fonts.googleapis.com/css?family=Roboto)
+@import url("http://fonts.googleapis.com/css?family=Roboto+Condensed")
+
+@font-face
+    font-family DroidSansMono
+    src local("Droid Sans Mono"), url("http://fonts.googleapis.com/css?family=Droid+Sans+Mono")
+
+pale = #7a7a7a
+
+since
+    float right
+    font-size 0.8em
+    color pale
+
+.responses
+    .metadata
+        margin 1em 0 1em 0
+
+monospace = "DroidSansMono", "Inconsolata", "Consolas", "monospace"
+
+pre,
+code,
+kbd,
+samp
+    font-family monospace
+
+basic-border = 1px solid #ccc
+
+pre
+    white-space pre
+    white-space pre-wrap
+    word-wrap break-word
+    padding 15px
+
+
+body,
+select,
+input,
+textarea
+    color #444
+    font-family Roboto, 'Helvetica Neue', Helvetica, Arial, Tahoma, sans-serif
+    font-weight normal
+
+body
+    padding-top 50px
+
+.navbar-header
+    font-family 'Sintony', Roboto, 'Helvetica Neue', Helvetica, Arial, Tahoma, sans-serif
+    font-weight 400
+
+    .navbar-brand
+        color rgb(68, 68, 68)
+        font-size 36px
+
+#io-footer
+    padding 1em 4em
+
+.sidebar
+    padding-right 0
+    padding-top 15px
+    border-right 1px solid rgb(231, 231, 231)
+    font-family "Roboto Condensed", 'Helvetica Neue', Helvetica, Arial, Tahoma, sans-serif
+    font-size 12px
+
+    .filter
+        padding-left 0.5em
+        padding-right 0.5em
+
+    .endpoints
+        margin-top 15px
+        width 100%
+        overflow auto
+        max-height 150px
+
+        li > a
+            padding 5px 15px
+            border-radius 0
+
+        @media screen and (min-width: 800px)
+            max-height 800px
+
+    @media screen and (min-width: 1000px)
+        font-family "Roboto", 'Helvetica Neue', Helvetica, Arial, Tahoma, sans-serif
+        font-size 14px
+
+centered(n)
+    width n
+    margin-left auto
+    margin-right auto
+
+.api-list
+    list-style-type none
+    centered 80%
+    clearfix()
+
+    li
+        margin 0.5em
+        padding 2em
+        border 1px solid #ccc
+        display inline-block
+        a
+            font-size 2em
+        &:hover
+            background #4a9cc5
+            a
+                color white
+
+form.custom
+    centered 80%
+    padding 2em
+    background #c6dce4
+    border 1px solid #ccc
+
+.muted
+    opacity 0.8
+
+.method
+
+    padding-top 2em
+
+    .description
+        padding-bottom 2em
+        text-align justify
+
+        code
+            white-space pre
+
+        table
+            min-width 75%
+            border-collapse collapse
+            margin-bottom 1em
+
+            th,
+            td
+                padding 0.2em 1em
+
+            tbody > tr > td
+                border-top 1px solid rgb(221, 221, 221)
+                font-family monospace
+                font-size 0.9em
+
+
+    pre
+        font-size 12px
+        overflow auto
+        border 1px solid rgba(0, 0, 0, 0.2)
+        background-color rgba(255, 255, 255, 0.4)
+
+        &.response
+            max-height 500px
+
+        &.error
+            background-color rgba(255, 66, 66, 0.2)
+
+
+    accordion .panel
+        max-width 600px
+        .panel-title
+            font-weight bold
+
+    .results
+        td
+            font-family monospace
+            font-size 0.9em
+
+.parameter
+    .caption
+        .description
+            font-size 0.9em
+        .type
+            font-family monospace
+            float right
+    .is-active
+        float right
+
+
+
+

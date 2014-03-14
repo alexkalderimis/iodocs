@@ -7,28 +7,48 @@ else
   required = false
   className = ''
 
-tr(id='param' + paramCount, class=className)
+placeholder = className
 
+if parameter.Type && parameter.Type.match(/\[\]$/)
+  paramClass = 'repeatable'
+  paramType = parameter.Type.replace('[]', '')
+else
+  paramClass = ''
+  paramType = parameter.Type || ''
+
+defVal = parameter.Default
+if defVal && (defVal.match('^/') || parameter.Repeat)
+  paramClass = paramClass + ' dynamic'
+  defVal = apiInfo.protocol + '://' + apiInfo.baseURL + apiInfo.publicPath + defVal
+
+repeat = parameter.Repeat
+if repeat
+  repeat = apiInfo.protocol + '://' + apiInfo.baseURL + apiInfo.publicPath + repeat
+
+isVariable = false
+paramName = parameter.Name
+if parameter.Name.match(/{N}/)
+  isVariable = true
+  paramName = parameter.Name.replace(/{N}/, '1')
+  className = className + ' numbered' + ' ' + paramClass
+
+tr(id='param' + paramCount, class=className, data-repeat=repeat, data-depends=parameter.Depends)
+   
   td.name
     if '?' === parameter.Name
+      isVariable = true
       input.variable-param(type = 'text')
     else if parameter.Name.match(/\?/)
+      isVariable = true
       input.variable-param(type = 'text', value = parameter.Name)
     else
-      | #{parameter.Name}
+      | #{paramName}
 
   td.parameter
 
-    if parameter.Type && parameter.Type.match(/\[\]$/)
-      paramClass = 'repeatable'
-      paramType = parameter.Type.replace('[]', '')
-    else
-      paramClass = ''
-      paramType = parameter.Type || ''
-
     case paramType.toLowerCase()
       when 'enumerated'
-        select(class=paramClass, name='params[' + parameter.Name + ']', placeholder=className)
+        select(class=paramClass, name='params[' + parameter.Name + ']', placeholder=placeholder)
           if parameter.Default == ''
             option(value='') 
           each choice in parameter.EnumeratedList
@@ -37,7 +57,7 @@ tr(id='param' + paramCount, class=className)
             else
               option(value=choice) #{choice}
       when 'boolean'
-        select(class=paramClass, name='params[' + parameter.Name + ']', placeholder=className)
+        select(class=paramClass, name='params[' + parameter.Name + ']', placeholder=placeholder)
           if parameter.Default == ''
             option(value='') 
           each choice in [apiInfo.booleanTrueVal, apiInfo.booleanFalseVal]
@@ -52,7 +72,7 @@ tr(id='param' + paramCount, class=className)
           rows = "4",
           cols = "50",
           name = 'params[' + parameter.Name + ']',
-          value = parameter.Default, placeholder=className, data-xmlschema=schema)
+          value = parameter.Default, placeholder=placeholder, data-xmlschema=schema)
       when 'xml'
         schema = parameter.Schema || ''
         textarea(
@@ -60,7 +80,7 @@ tr(id='param' + paramCount, class=className)
           rows = "4",
           cols = "50",
           name = 'params[' + parameter.Name + ']',
-          value = parameter.Default, placeholder=className, data-xmlschema=schema)
+          value = parameter.Default, placeholder=placeholder, data-xmlschema=schema)
       when 'integer'
         input(
           class = paramClass,
@@ -74,23 +94,18 @@ tr(id='param' + paramCount, class=className)
         input(
           class = paramClass,
           name = 'params[' + parameter.Name + ']',
-          value = parameter.Default,
+          value = defVal,
           placeholder = className,
           type = 'email')
       default
-        defVal = parameter.Default
-        if defVal && defVal.match('^/')
-          paramClass = paramClass + ' dynamic'
-          defVal = apiInfo.protocol + '://' + apiInfo.baseURL + apiInfo.publicPath + defVal
-          
         input(
           class = paramClass,
-          name = 'params[' + parameter.Name + ']',
+          name = 'params[' + paramName + ']',
           value = defVal,
-          placeholder = className,
+          placeholder = placeholder,
           type = 'text')
 
-  td.type=parameter.Type
+  td.type=parameter.Type.replace(/[\[\]]/g, '')
 
   td.description
       p=parameter.Description || 'No description'
@@ -103,7 +118,16 @@ tr(id='param' + paramCount, class=className)
   td.enabled
     if required
       input(type='checkbox', checked=true, disabled=true, title="This parameter must be provided")
+    else 
+      input(type='checkbox', class='provide-' + paramName, title="Provide this optional parameter")
+
+  td.variable
+    if isVariable
+      div.btn-group
+        button.btn.btn-small.add +
+        button.btn.btn-small.remove -
     else
-      input(type='checkbox', class='provide-' + parameter.Name, title="Provide this optional parameter")
+      | &nbsp;
+
 
 

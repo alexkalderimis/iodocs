@@ -1,0 +1,21 @@
+.navbar.navbar-default.navbar-fixed-top(role="navigation")
+  .container-fluid
+    .navbar-header
+      .row
+        .col-sm-4
+          span.navbar-brand #{apiInfo().name}
+        .col-sm-2
+          p.navbar-text
+            | API version
+            span.badge {{apiInfo.apiVersion}}
+        .col-sm-6(ng-controller="AuthCtrl")
+          form.navbar-form.navbar-right
+            .form-group
+              .input-group
+                span.input-group-addon
+                  span(ng-show="auth.username") Logged in as {{auth.username}}
+                  span(ng-hide="auth.username") Not logged in
+                input.form-control(ng-hide="auth.username", type="text", ng-model="auth.token", placeholder="API token")
+                span.input-group-btn(ng-if="auth.username")
+                  button.btn.btn-default(ng-click="auth.token = null") Log Out
+

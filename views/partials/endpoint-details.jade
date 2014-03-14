@@ -1,0 +1,62 @@
+.row
+  .col-sm-3.sidebar(ng-controller="SidebarCtrl")
+
+    .input-group.filter
+      span.input-group-addon
+        i.glyphicon.glyphicon-search
+      input.form-control(type="text", ng-model="endpointFilter", placeholder="by term")
+      span.input-group-btn
+        button.btn.btn-default(ng-click="endpointFilter = null") Clear
+
+    ul.nav.nav-pills.nav-stacked.endpoints
+      li(ng-repeat="e in endpoints | filter:endpointFilter", ng-class="{active: e.identifier == currentEndpoint}")
+        a(href="#/{{e.identifier}}") {{e.name}}
+
+  .col-sm-9
+
+    h2 {{endpoint.name}}
+
+    .since Since version: {{endpoint.minVersion}}
+
+    tabset
+      tab(ng-repeat="m in endpoint.methods",
+        select="methodChanged()",
+        deselect="methodChanged()",
+        active="m.active",
+        heading="{{m.HTTPMethod}} {{m.URI}}")
+
+        .method(ng-controller="MethodCtrl")
+
+          accordion(close-others="true")
+            accordion-group(is-open="m.show == 'desc'", heading = "Description")
+              .description(ng-if="htmlDesc", ng-bind-html="description")
+              .description(ng-if="!htmlDesc") {{description}}
+
+              .auth-info(ng-show="m.RequiresAuthentication")
+                span.label(ng-class="{'label-danger': !auth.username, 'label-success': auth.username}") Requires authentication
+
+            accordion-group.parameters(is-open="m.show == 'params'", heading="Parameters")
+
+              form(role="form")
+
+                http-parameter(ng-repeat="parameter in params")
+
+                label(ng-show="m.bodyDescription")
+                  | {{m.bodyDescription}}
+                ng-switch(on = "m.body.length", ng-show="m.body.length")
+                  .content-type(ng-switch-when="1")
+                    | Content Type: {{ m.body[0].contentType }}
+                  select.form-control(ng-switch-default, ng-model="m.bodyContentType")
+                    option(ng-repeat="b in m.body") {{b.contentType}}
+
+                textarea.form-control(ng-show="m.body.length", ng-model="m.content")
+
+              button.btn.btn-primary(ng-click="run(m.HTTPMethod)") Run with these parameters
+
+            accordion-group.results(heading="Results", is-open="m.show == 'res'")
+              accordion
+                accordion-group(ng-repeat="res in m.results", is-open="{{$last}}")
+                  accordion-heading {{$index + 1}}: {{res.query.httpMethod}} {{res.call}} {{res.code}}
+
+                  include response-display
+

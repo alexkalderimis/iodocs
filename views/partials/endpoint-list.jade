@@ -1,0 +1,7 @@
+.row
+  .col-sm-3.col-md-2(ng-repeat="endpoint in endpoints")
+    .thumbnail
+      h3
+        a(href="#/{{endpoint.identifier}}")
+          {{endpoint.name}}
+      {{endpoint.URI}}

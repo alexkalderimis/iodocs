@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2011 Mashery, Inc.
+// Copyright (c) 2013-2014 InterMine and Alex Kalderimis
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -29,66 +30,99 @@
 var express     = require('express'),
     util        = require('util'),
     fs          = require('fs'),
-    OAuth       = require('oauth').OAuth,
     query       = require('querystring'),
     url         = require('url'),
     http        = require('http'),
     https       = require('https'),
     winston     = require('winston'),
-    crypto      = require('crypto');
+    cmw         = require('coffee-middleware'),
+    crypto      = require('crypto'),
+    stylus      = require('stylus'),
+    nib         = require('nib'),
+    EventEmitter = require('events').EventEmitter,
+    oauth       = require('./lib/oauth'),
+    config      = {},
+    redis, RedisStore;
 
-    //redis       = require('redis'),
-    //RedisStore  = require('connect-redis')(express);
-
-// Configuration
 try {
+  redis       = require('redis'),
+  RedisStore  = require('connect-redis')(express);
+} catch (e) {
+  // ignore.
+}
+
+// Load basic app Configuration
+try {
+  (function () {
     var configJSON = fs.readFileSync(__dirname + "/config.json");
-    var config = JSON.parse(configJSON.toString());
+    config = JSON.parse(configJSON.toString());
+  })();
 } catch(e) {
-    console.error("File config.json not found or is invalid.  Try: `cp config.json.sample config.json`");
-    process.exit(1);
+  console.error("File config.json not found or is invalid.  Try: `cp config.json.sample config.json`");
+  process.exit(1);
 }
 
 var CAN_HAVE_BODY = function (method) {
   return ['POST','PUT','DELETE'].indexOf(method) >= 0;
 };
 
-//
-// Redis connection (used for persisting OAuth connection details).
-// Removed from this version, as is not required.
-/*
-var defaultDB = '0';
-var db;
-
-if (process.env.REDISTOGO_URL) {
-    var rtg   = require("url").parse(process.env.REDISTOGO_URL);
-    db = require("redis").createClient(rtg.port, rtg.hostname);
-    db.auth(rtg.auth.split(":")[1]);
-} else {
-    db = redis.createClient(config.redis.port, config.redis.host);
-    db.auth(config.redis.password);
-}
-
-db.on("error", function(err) {
-    if (config.debug) {
-         console.log("Error " + err);
-    }
-});
-*/
-
+// Init logger.
 var logger = new winston.Logger({
   transports: [
     new winston.transports.Console({
       colorize: true,
-      level: 'warn'
+      level: 'debug'
     }),
     new winston.transports.File({
       filename: "iodocs.log",
       timestamp: true,
-      level: 'debug'}
-    )
+      level: 'debug'
+    })
   ]
 });
+
+// Init Redis connection (used for persisting OAuth connection details).
+var defaultDB = '0';
+var db;
+
+// Read config from ENV, if provided.
+if (process.env.REDISTOGO_URL) {
+  (function () {
+    var rtg = url.parse(process.env.REDISTOGO_URL);
+    if (!config.redis) config.redis = {};
+    config.redis.host = rtg.hostname;
+    config.redis.port = rtg.port;
+    config.redis.password = rtg.auth.split(":")[1];
+  })();
+}
+
+if (redis) {
+  if (config.redis && config.redis.port) {
+    db = redis.createClient(config.redis.port, config.redis.host);
+    db.auth(config.redis.password);
+  }
+} else if (config.redis && config.redis.port) {
+  logger.warn("Redis connection configured, but not available. Install library with 'npm install redis'")
+}
+
+if (!db) {
+  (function () {
+    db = new EventEmitter();
+    RedisStore = function MockRedisStore () {};
+
+    // Stub out all db methods that we call.
+    db.set = mockMethod;
+    db.expire = mockMethod;
+    db.mget = mockMethod;
+    db.mset = mockMethod;
+
+    function mockMethod () {
+      logger.warn("Redis command called, but redis is not installed.");
+    }
+  })();
+}
+
+db.on("error", logger.error.bind(logger, '[REDIS] %s'));
 
 //
 // Load API Configs
@@ -99,40 +133,45 @@ var imAPIs = {};
 function initAppConfig () {
 
   fs.readFile('public/data/apiconfig.json', 'utf-8', function(err, data) {
-      var apiName;
-      if (err) throw err;
-      apisConfig = JSON.parse(data);
-      if (config.debug) {
-          logger.debug('API CONFIG: %j', apisConfig)
-      }
-      for (apiName in apisConfig) {
-          (function(name) {
-              var api, serviceListingURI;
-              api = apisConfig[name];
-              var handleError = function (e) {
-                  logger.log('warn', 'Could not fetch service listing for %s', name, e);
-                  delete apisConfig[name];
-              };
-              if (api.intermine) {
-                  serviceListingURI = api.protocol + "://" + api.baseURL + api.publicPath;
-                  console.log("Fetching service listing from " + serviceListingURI);
-                  var req = http.get(serviceListingURI, function(res) {
-                      var body = "";
-                      res.on('data', function(chunk) { body += chunk; });
-                      res.on('end', function() {
-                          logger.log('debug', "Retrieved service listing for %s", name);
-                          try {
-                              imAPIs[name] = JSON.parse(body);
-                          } catch (e) {
-                              var msg = "Error parsing service listing for " + name + ": " + e;
-                              handleError(new Error(msg));
-                          }
-                      });
-                  });
-                  req.on('error', handleError);
+    var apiName;
+    if (err) throw err;
+
+    apisConfig = JSON.parse(data);
+    logger.debug('API CONFIG: %j', apisConfig)
+
+    for (apiName in apisConfig) {
+      fetchServiceListing(apiName);
+    }
+
+    function fetchServiceListing (name) {
+      var req
+        , api = apisConfig[name]
+        , serviceListingURI = api.protocol + "://" + api.baseURL + api.publicPath;
+
+      if (!api.intermine) return;
+
+      logger.debug("Fetching service listing from " + serviceListingURI);
+
+      req = http.get(serviceListingURI, function responseHandler (res) {
+          var body = "";
+          res.on('data', function(chunk) { body += chunk; });
+          res.on('error', handleError);
+          res.on('end', function done () {
+              logger.log('debug', "Retrieved service listing for %s", name);
+              try {
+                imAPIs[name] = JSON.parse(body);
+              } catch (e) {
+                var msg = "Error parsing service listing for " + name + ": " + e;
+                handleError(new Error(msg));
               }
-          })(apiName);
+          });
+      });
+      req.on('error', handleError);
+      function  handleError (e) {
+        logger.log('warn', 'Could not fetch service listing for %s', name, e);
+        delete apisConfig[name];
       }
+    }
   });
 }
 
@@ -142,234 +181,77 @@ initAppConfig();
 // Refresh config every five minutes.
 setInterval(initAppConfig, 5 * 60 * 1000);
 
-//var sass = require('node-sass');
-//var compass = require('node-compass');
-
-
-var app = module.exports = express.createServer();
-
-//if (process.env.REDISTOGO_URL) {
-//    var rtg   = require("url").parse(process.env.REDISTOGO_URL);
-//    config.redis.host = rtg.hostname;
-//    config.redis.port = rtg.port;
-//    config.redis.password = rtg.auth.split(":")[1];
-//}
-
-var winstonStream = {
-  write: function (message, encoding) {
-    winston.info(message.slice(0, -1));
-  }
-}
+var app = module.exports = express(); 
 
 app.configure(function() {
-    app.set('views', __dirname + '/views');
-    app.set('view engine', 'jade');
-    app.use(express.logger({stream: winstonStream}));
-    app.use(express.bodyParser());
-    app.use(express.methodOverride());
-    app.use(express.cookieParser());
-    app.use(express.session({
-        secret: config.sessionSecret
-        //store:  new RedisStore({
-        //    'host':   config.redis.host,
-        //    'port':   config.redis.port,
-        //    'pass':   config.redis.password,
-        //    'maxAge': 1209600000
-        //})
-    }));
 
-    /*
-    app.use(compass({
-      sass: __dirname + '/public/stylesheets/scss',
-      css: __dirname + '/public/stylesheets',
-      debug: true
-    }));
-    */
+  var sessionStore, winstonStream = {
+    write: function (message, encoding) {
+      logger.info(message.slice(0, -1));
+    }
+  };
 
-    app.use(app.router);
+  if (config.redis && config.redis.port) {
+    sessionStore = new RedisStore({
+      host:   config.redis.host,
+      port:   config.redis.port,
+      pass:   config.redis.password,
+      maxAge: 1209600000
+    });
+  }
 
-    app.use(express.static(__dirname + '/components'));
-    app.use(express.static(__dirname + '/public'));
+  app.set('views', __dirname + '/views');
+  app.set('view engine', 'jade');
+  app.use(express.logger({stream: winstonStream}));
+  app.use(express.bodyParser());
+  app.use(express.methodOverride());
+  app.use(express.cookieParser());
+  app.use(cmw({
+    encodeSrc: false,
+    src: __dirname + '/public/coffee', prefix: '/javascripts'
+  }));
+  app.use(express.session({
+    secret: config.sessionSecret,
+    store: sessionStore
+  }));
+  app.use(stylus.middleware({
+    src: __dirname + '/public',
+    compile: function (str, path) {
+      return stylus(str)
+        .set('filename', path)
+        .set('compress', !!config.compressCss)
+        .use(nib()).import('nib');
+    }
+  }));
+  app.use(function (req, res, next) {
+    // Must return a function to get the value,
+    // as the request handler won't have been
+    // matched yet, so the 'api' param won't be
+    // populated.
+    res.locals.apiInfo = function () {
+      return (apisConfig[req.params.api] || {});
+    };
+    next();
+  });
+  app.use(app.router);
+  app.use(express.static(__dirname + '/components'));
+  app.use(express.static(__dirname + '/public'));
 });
 
 app.configure('development', function() {
-    app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
 
 app.configure('production', function() {
-    app.use(express.errorHandler());
+  app.use(express.errorHandler());
 });
-
-//
-// Middleware
-//
-function oauth(req, res, next) {
-    logger.info('OAuth process started');
-    var apiName = req.body.apiName,
-        apiConfig = apisConfig[apiName];
-
-    /*
-    if (apiConfig.oauth) {
-        var apiKey = req.body.apiKey || req.body.key,
-            apiSecret = req.body.apiSecret || req.body.secret,
-            refererURL = url.parse(req.headers.referer),
-            callbackURL = refererURL.protocol + '//' + refererURL.host + '/authSuccess/' + apiName,
-            oa = new OAuth(apiConfig.oauth.requestURL,
-                           apiConfig.oauth.accessURL,
-                           apiKey,
-                           apiSecret,
-                           apiConfig.oauth.version,
-                           callbackURL,
-                           apiConfig.oauth.crypt);
-
-        if (config.debug) {
-            console.log('OAuth type: ' + apiConfig.oauth.type);
-            console.log('Method security: ' + req.body.oauth);
-            console.log('Session authed: ' + req.session[apiName]);
-            console.log('apiKey: ' + apiKey);
-            console.log('apiSecret: ' + apiSecret);
-        };
-
-        // Check if the API even uses OAuth, then if the method requires oauth, then
-        // if the session is not authed
-        if (apiConfig.oauth.type == 'three-legged'
-            && req.body.oauth == 'authrequired'
-            && (!req.session[apiName] || !req.session[apiName].authed) ) {
-            if (config.debug) {
-                console.log('req.session: ' + util.inspect(req.session));
-                console.log('headers: ' + util.inspect(req.headers));
-
-                console.log(util.inspect(oa));
-                // console.log(util.inspect(req));
-                console.log('sessionID: ' + util.inspect(req.sessionID));
-                // console.log(util.inspect(req.sessionStore));
-            };
-
-            oa.getOAuthRequestToken(function(err, oauthToken, oauthTokenSecret, results) {
-                if (err) {
-                    res.send("Error getting OAuth request token : " + util.inspect(err), 500);
-                } else {
-                    // Unique key using the sessionID and API name to store tokens and secrets
-                    var key = req.sessionID + ':' + apiName;
-
-                    db.set(key + ':apiKey', apiKey, redis.print);
-                    db.set(key + ':apiSecret', apiSecret, redis.print);
-
-                    db.set(key + ':requestToken', oauthToken, redis.print);
-                    db.set(key + ':requestTokenSecret', oauthTokenSecret, redis.print);
-
-                    // Set expiration to same as session
-                    db.expire(key + ':apiKey', 1209600000);
-                    db.expire(key + ':apiSecret', 1209600000);
-                    db.expire(key + ':requestToken', 1209600000);
-                    db.expire(key + ':requestTokenSecret', 1209600000);
-
-                    // res.header('Content-Type', 'application/json');
-                    res.send({ 'signin': apiConfig.oauth.signinURL + oauthToken });
-                }
-            });
-        } else if (apiConfig.oauth.type == 'two-legged' && req.body.oauth == 'authrequired') {
-            // Two legged stuff... for now nothing.
-            next();
-        } else {
-            next();
-        }
-    } else {
-    */
-        next();
-    //}
-
-}
-
-//
-// OAuth Success!
-//
-/*
-function oauthSuccess(req, res, next) {
-    var oauthRequestToken,
-        oauthRequestTokenSecret,
-        apiKey,
-        apiSecret,
-        apiName = req.params.api,
-        apiConfig = apisConfig[apiName],
-        key = req.sessionID + ':' + apiName; // Unique key using the sessionID and API name to store tokens and secrets
-
-    if (config.debug) {
-        console.log('apiName: ' + apiName);
-        console.log('key: ' + key);
-        console.log(util.inspect(req.params));
-    };
-
-    db.mget([
-        key + ':requestToken',
-        key + ':requestTokenSecret',
-        key + ':apiKey',
-        key + ':apiSecret'
-    ], function(err, result) {
-        if (err) {
-            console.log(util.inspect(err));
-        }
-        oauthRequestToken = result[0],
-        oauthRequestTokenSecret = result[1],
-        apiKey = result[2],
-        apiSecret = result[3];
-
-        if (config.debug) {
-            console.log(util.inspect(">>"+oauthRequestToken));
-            console.log(util.inspect(">>"+oauthRequestTokenSecret));
-            console.log(util.inspect(">>"+req.query.oauth_verifier));
-        };
-
-        var oa = new OAuth(apiConfig.oauth.requestURL,
-                           apiConfig.oauth.accessURL,
-                           apiKey,
-                           apiSecret,
-                           apiConfig.oauth.version,
-                           null,
-                           apiConfig.oauth.crypt);
-
-        if (config.debug) {
-            console.log(util.inspect(oa));
-        };
-
-        var handleToken = function(error, oauthAccessToken, oauthAccessTokenSecret, results) {
-            if (error) {
-                res.send("Error getting OAuth access token : " + util.inspect(error)
-                    + "[" + oauthAccessToken +"]" + "["+oauthAccessTokenSecret +"]"
-                    + "[" + util.inspect(results) +"]", 500);
-            } else {
-                if (config.debug) {
-                    console.log('results: ' + util.inspect(results));
-                };
-                db.mset([key + ':accessToken', oauthAccessToken,
-                    key + ':accessTokenSecret', oauthAccessTokenSecret
-                ], function(err, results2) {
-                    req.session[apiName] = {};
-                    req.session[apiName].authed = true;
-                    if (config.debug) {
-                        console.log('session[apiName].authed: ' + util.inspect(req.session));
-                    };
-
-                    next();
-                });
-            }
-        };
-        oa.getOAuthAccessToken(
-            oauthRequestToken, oauthRequestTokenSecret,
-            req.query.oauth_verifier, handleToken
-        );
-
-    });
-}
-*/
 
 //
 // processRequest - handles API call
 //
 function processRequest(req, res, next) {
-    if (config.debug) {
-        logger.log('Request body: ' + util.inspect(req.body, null, 3));
-    };
+    logger.debug('Request body: ' + util.inspect(req.body, null, 3));
+    logger.debug('Request params: ' + util.inspect(req.params));
 
     var reqQuery = req.body,
         params = reqQuery.params || {},
@@ -381,6 +263,12 @@ function processRequest(req, res, next) {
         apiName = reqQuery.apiName
         apiConfig = apisConfig[apiName],
         key = req.sessionID + ':' + apiName;
+
+    if (!apiConfig) {
+      return res.send(400, "Unknown apiName " + reqQuery.apiName);
+    } else {
+      logger.debug(apiConfig);
+    }
 
     // Replace placeholders in the methodURL with matching params
     for (var param in params) {
@@ -417,36 +305,33 @@ function processRequest(req, res, next) {
 
     var requestBody;
     if (body == null && ['POST','DELETE','PUT'].indexOf(httpMethod) !== -1) {
-        requestBody = query.stringify(params);
+      requestBody = query.stringify(params);
     } else if (body != null) {
-        requestBody = body.Content;
+      requestBody = body.Content;
     }
 
-    /*
     if (apiConfig.oauth) {
-        console.log('Using OAuth');
+      logger.debug('Using OAuth');
 
-        // Three legged OAuth
-        if (apiConfig.oauth.type == 'three-legged' && (reqQuery.oauth == 'authrequired' || (req.session[apiName] && req.session[apiName].authed))) {
-            if (config.debug) {
-                console.log('Three Legged OAuth');
-            };
+      // Three legged OAuth
+      if (apiConfig.oauth.type == 'three-legged' && (reqQuery.oauth == 'authrequired' || (req.session[apiName] && req.session[apiName].authed))) {
+        logger.debug('Three Legged OAuth');
 
-            db.mget([key + ':apiKey',
-                     key + ':apiSecret',
-                     key + ':accessToken',
-                     key + ':accessTokenSecret'
-                ],
+          db.mget([key + ':apiKey',
+                    key + ':apiSecret',
+                    key + ':accessToken',
+                    key + ':accessTokenSecret'
+              ],
                 function(err, results) {
 
                     var apiKey = (typeof reqQuery.apiKey == "undefined" || reqQuery.apiKey == "undefined")?results[0]:reqQuery.apiKey,
                         apiSecret = (typeof reqQuery.apiSecret == "undefined" || reqQuery.apiSecret == "undefined")?results[1]:reqQuery.apiSecret,
                         accessToken = results[2],
                         accessTokenSecret = results[3];
-                    console.log(apiKey);
-                    console.log(apiSecret);
-                    console.log(accessToken);
-                    console.log(accessTokenSecret);
+                    logger.debug(apiKey);
+                    logger.debug(apiSecret);
+                    logger.debug(accessToken);
+                    logger.debug(accessTokenSecret);
                     
                     var oa = new OAuth(apiConfig.oauth.requestURL || null,
                                        apiConfig.oauth.accessURL || null,
@@ -457,17 +342,17 @@ function processRequest(req, res, next) {
                                        apiConfig.oauth.crypt);
 
                     if (config.debug) {
-                        console.log('Access token: ' + accessToken);
-                        console.log('Access token secret: ' + accessTokenSecret);
-                        console.log('key: ' + key);
+                        logger.debug('Access token: ' + accessToken);
+                        logger.debug('Access token secret: ' + accessTokenSecret);
+                        logger.debug('key: ' + key);
                     };
 
                     oa.getProtectedResource(privateReqURL, httpMethod, accessToken, accessTokenSecret,  function (error, data, response) {
                         req.call = privateReqURL;
 
-                        // console.log(util.inspect(response));
+                        // logger.debug(util.inspect(response));
                         if (error) {
-                            console.log('Got error: ' + util.inspect(error));
+                            logger.debug('Got error: ' + util.inspect(error));
 
                             if (error.data == 'Server Error' || error.data == '') {
                                 req.result = 'Server Error';
@@ -489,7 +374,7 @@ function processRequest(req, res, next) {
             );
         } else if (apiConfig.oauth.type == 'two-legged' && reqQuery.oauth == 'authrequired') { // Two-legged
             if (config.debug) {
-                console.log('Two Legged OAuth');
+                logger.debug('Two Legged OAuth');
             };
 
             var body,
@@ -507,14 +392,14 @@ function processRequest(req, res, next) {
                         if (error.data == 'Server Error' || error.data == '') {
                             req.result = 'Server Error';
                         } else {
-                            console.log(util.inspect(error));
+                            logger.debug(util.inspect(error));
                             body = error.data;
                         }
 
                         res.statusCode = error.statusCode;
 
                     } else {
-                        console.log(util.inspect(data));
+                        logger.debug(util.inspect(data));
 
                         var responseContentType = response.headers['content-type'];
 
@@ -548,7 +433,7 @@ function processRequest(req, res, next) {
 
             switch (httpMethod) {
                 case 'GET':
-                    console.log(resource);
+                    logger.debug(resource);
                     oa.get(resource, '', '',cb);
                     break;
                 case 'PUT':
@@ -566,14 +451,13 @@ function processRequest(req, res, next) {
             unsecuredCall();
         }
     } else {
-    */
-        // API does not use authentication
+        // API does not use OAuth authentication
         unsecuredCall();
-    //}
+    }
 
     // Unsecured API Call helper
     function unsecuredCall() {
-        console.log('Unsecured Call');
+        logger.debug('Unsecured Call');
 
         if (body != null || !CAN_HAVE_BODY(httpMethod)) {
             options.path += ((paramString.length > 0) ? '?' + paramString : "");
@@ -609,13 +493,13 @@ function processRequest(req, res, next) {
         // Setup headers, if any
         if (reqQuery.headerNames && reqQuery.headerNames.length > 0) {
             if (config.debug) {
-                console.log('Setting headers');
+                logger.debug('Setting headers');
             };
             var headers = {};
 
             for (var x = 0, len = reqQuery.headerNames.length; x < len; x++) {
                 if (config.debug) {
-                  console.log('Setting header: ' + reqQuery.headerNames[x] + ':' + reqQuery.headerValues[x]);
+                  logger.debug('Setting header: ' + reqQuery.headerNames[x] + ':' + reqQuery.headerValues[x]);
                 };
                 if (reqQuery.headerNames[x] != '') {
                     headers[reqQuery.headerNames[x]] = reqQuery.headerValues[x];
@@ -639,16 +523,16 @@ function processRequest(req, res, next) {
         }
 
         if (config.debug) {
-            console.log(util.inspect(options));
+            logger.debug(util.inspect(options));
         };
 
         var doRequest;
         if (options.protocol === 'https' || options.protocol === 'https:') {
-            console.log('Protocol: HTTPS');
+            logger.debug('Protocol: HTTPS');
             options.protocol = 'https:'
             doRequest = https.request;
         } else {
-            console.log('Protocol: HTTP');
+            logger.debug('Protocol: HTTP');
             doRequest = http.request;
         }
 
@@ -656,12 +540,11 @@ function processRequest(req, res, next) {
         var apiCall = doRequest(options, function(response) {
             response.setEncoding('utf-8');
 
-            if (config.debug) {
-                console.log('HEADERS: ' + JSON.stringify(response.headers));
-                console.log('STATUS CODE: ' + response.statusCode);
-            };
+            logger.debug("Received response")
+            logger.debug('HEADERS: ' + JSON.stringify(response.headers));
+            logger.debug('STATUS CODE: ' + response.statusCode);
 
-            res.statusCode = response.statusCode;
+            req.code = response.statusCode;
 
             var body = '';
 
@@ -670,6 +553,7 @@ function processRequest(req, res, next) {
             })
 
             response.on('end', function() {
+                logger.debug('REPONSE BODY: ' + body);
                 delete options.agent;
 
                 var responseContentType = response.headers['content-type'];
@@ -677,7 +561,7 @@ function processRequest(req, res, next) {
                 switch (true) {
                     case /application\/javascript/.test(responseContentType):
                     case /application\/json/.test(responseContentType):
-                        console.log(util.inspect(body));
+                        logger.debug(util.inspect(body));
                         // body = JSON.parse(body);
                         break;
                     case /application\/xml/.test(responseContentType):
@@ -693,15 +577,15 @@ function processRequest(req, res, next) {
                 // Response body
                 req.result = body;
 
-                console.log(util.inspect(body));
+                logger.debug(util.inspect(body));
 
                 next();
             })
         }).on('error', function(e) {
             if (config.debug) {
-                console.log('HEADERS: ' + JSON.stringify(res.headers));
-                console.log("Got error: " + e.message);
-                console.log("Error: " + util.inspect(e));
+                logger.debug('HEADERS: ' + JSON.stringify(res.headers));
+                logger.debug("Got error: " + e.message);
+                logger.debug("Error: " + util.inspect(e));
             };
         });
 
@@ -714,90 +598,42 @@ function processRequest(req, res, next) {
     }
 }
 
-
-// Dynamic Helpers
-// Passes variables to the view
-app.dynamicHelpers({
-    session: function(req, res) {
-    // If api wasn't passed in as a parameter, check the path to see if it's there
-        if (!req.params.api) {
-            pathName = req.url.replace('/','');
-            // Is it a valid API - if there's a config file we can assume so
-            fs.stat('public/data/' + pathName + '.json', function (error, stats) {
-                if (stats) {
-                    req.params.api = pathName;
-                }
-            });
-        }       
-        // If the cookie says we're authed for this particular API, set the session to authed as well
-        if (req.params.api && req.session[req.params.api] && req.session[req.params.api]['authed']) {
-            req.session['authed'] = true;
-        }
-
-        return req.session;
-    },
-    apiInfo: function(req, res) {
-        if (req.params.api) {
-            return apisConfig[req.params.api];
-        } else {
-            return apisConfig;
-        }
-    },
-    apiName: function(req, res) {
-      return req.params.api;
-    },
-    apiDefinition: function(req, res) {
-        // This should make requests to the specific service to retrieve the service listing.
-        if (req.params.api) {
-            var apiInfo = apisConfig[req.params.api];
-            if (apiInfo.intermine) {
-                return imAPIs[req.params.api];
-            } else {
-                var data = fs.readFileSync('public/data/' + req.params.api + '.json');
-                return JSON.parse(data);
-            }
-        }
-    }
-})
-
-
 //
 // Routes
 //
 app.get('/', function(req, res) {
-    res.render('listAPIs', {
-        title: config.title
-    });
+  res.render('listAPIs', { title: config.title });
+});
+
+var openAuthFilter = oauth.auth({
+  logger: logger,
+  config: config,
+  redis: db,
+  apis: apisConfig
 });
 
 // Process the API request
-app.post('/processReq', oauth, processRequest, function(req, res) {
-    var result = {
-        headers: req.resultHeaders,
-        response: req.result,
-        call: req.call,
-        code: req.res.statusCode
-    };
+app.post('/processReq', openAuthFilter, processRequest, deliverResult);
 
-    res.send(result);
-});
+function deliverResult (req, res) {
+  var result = {
+      headers: req.resultHeaders,
+      response: req.result,
+      call: req.call,
+      code: req.code
+  };
+
+  res.send(result);
+}
 
 // Just auth
-app.all('/auth', oauth);
+app.all('/auth', openAuthFilter);
 
 // OAuth callback page, closes the window immediately after storing access token/secret
-/*
-app.get('/authSuccess/:api', oauthSuccess, function(req, res) {
-    res.render('authSuccess', {
-        title: 'OAuth Successful'
-    });
-});
-*/
-
-app.post('/upload', function(req, res) {
-  console.log(req.body.user);
-  res.redirect('back');
-});
+app.get('/authSuccess/:api',
+  oauth.success({logger: logger, config: config, redis: db, apis: apisConfig}),
+  function (req, res) { res.render('authSuccess', { title: 'OAuth Successful' });}
+);
 
 app.get('/custom', function(req, res) {
   res.render('custom', {error: null});
@@ -809,13 +645,13 @@ app.post('/custom', function(req, res) {
   var slug = api.slug;
   api.publicPath = '/' + api.publicPath + '/service';
   var uri = api.protocol + "://" + api.baseURL + api.publicPath;
-  console.log("Fetching service listing from " + uri);
+  logger.debug("Fetching service listing from " + uri);
   var fetching = http.get(uri, function(response) {
       var buff = "";
       response.on('data', function(chunk) { buff += chunk; });
       response.on('error', handleError);
       response.on('end', function() {
-          console.log("Retrieved service listing for " + name);
+          logger.debug("Retrieved service listing for " + name);
           try {
               imAPIs[slug] = JSON.parse(buff);
           } catch (e) {
@@ -833,52 +669,26 @@ app.post('/custom', function(req, res) {
   }
 });
 
-// API shortname, all lowercase
-app.get('/:api([^\.]+)', function(req, res) {
-    res.render('api');
+app.get('/', function (req, res) { res.render('ng-api') });
+app.get('/:api/docs', function (req, res) { res.render('ng-api') });
+
+app.post('/:api/run', function (req, res, next) {
+  (req.body || {}).apiName = req.params.api;
+  logger.debug("Set apiName to %s", req.params.api);
+  logger.debug(req.body);
+  next();
+}, processRequest, deliverResult);
+
+app.get('/:api/definition.json', function (req, res) {
+  res.json(imAPIs[req.params.api]);
 });
 
-app.get('/:api/:endpoint', function(req, res, next) {
-    // make sure we don't try and handle requests to /javascripts, etc
-    if (apisConfig[ req.params.api ]) {
-      res.render('api-endpoint');
-    } else {
-      next();
-    }
+app.get('/:api/info.json', function (req, res) {
+  res.json(apisConfig[req.params.api]);
 });
 
-app.get('/definition/:api([^\.]+)', function(req, res) {
-  var api = apisConfig[ req.params.api ];
-
-  if (api.intermine) {
-    serviceListingURI = api.protocol + "://" + api.baseURL + api.publicPath;
-    console.log("Fetching service listing from " + serviceListingURI);
-    var req = http.get(serviceListingURI, function(res) {
-      var body = "";
-      res.on('data', function(chunk) {
-        body += chunk;
-      });
-      res.on('end', function() {
-        console.log("Retrieved service listing for " + name);
-        try {
-          imAPIs[name] = JSON.parse(body);
-          res.json(imAPIs[name]);
-        } catch (e) {
-          var msg = "Error parsing service listing for " + name + ": " + e;
-          handleError(new Error(msg));
-        }
-      });
-    });
-    req.on('error', handleError);
-  } else {
-    fs.readFile('public/data/' + req.params.api + '.json', function(err, data) {
-      if (err) {
-        handleError(err);
-      } else {
-        res.json(data);
-      }
-    });
-  }
+app.get('/partials/:name.html', function (req, res) {
+  res.render('partials/' + req.params.name, {layout: null});
 });
 
 // Only listen on $ node app.js
@@ -886,5 +696,5 @@ app.get('/definition/:api([^\.]+)', function(req, res) {
 if (!module.parent) {
     var port = process.env.PORT || config.port;
     app.listen(port);
-    console.log("Express server listening on port %d", port);
+    logger.debug("Express server listening on port %d", port);
 }
