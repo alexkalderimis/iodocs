@@ -4,5 +4,5 @@ components/*
 config.json
 logs/*
 pids/*
-*.log 
+*.log
 public/stylesheets/style.css
