@@ -2,8 +2,8 @@
     "demomine": {
         "name": "Test-Data Mine",
         "protocol": "http",
-        "baseURL": "bc:8081",
-        "publicPath": "/intermine-test-dev/service",
+        "baseURL": "localhost:8080",
+        "publicPath": "/intermine-test/service",
         "version": "/version",
         "auth": "key",
         "intermine": true,

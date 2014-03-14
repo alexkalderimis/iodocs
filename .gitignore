@@ -1,5 +1,8 @@
 .DS_Store
 node_modules/*
+components/*
 config.json
 logs/*
 pids/*
+*.log 
+public/stylesheets/style.css
