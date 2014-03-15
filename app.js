@@ -231,6 +231,7 @@ app.configure(function() {
     res.locals.apiInfo = function () {
       return (apisConfig[req.params.api] || {});
     };
+    res.locals.apis = apisConfig;
     next();
   });
   app.use(app.router);
