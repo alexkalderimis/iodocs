@@ -41,13 +41,20 @@ IODirectives.directive 'updateOnBlur', ->
     return if (attr.type is 'radio') or (attr.type is 'checkbox')
 
     elm.off(evt) for evt in ['input', 'keydown']
-    ###
-    elm.on 'focus', -> scope.$apply ->
-      console.log "in focus"
-      ngModelCtrl.$setPristine()
-    ###
 
     elm.on 'blur', -> scope.$apply ->
-      console.log "Lost focus"
       ngModelCtrl.$setViewValue elm.val()
+
+IODirectives.directive 'resize', ($window, $log) ->
+  restrict: 'A'
+  link: (scope, elm, attrs, ctrl) ->
+    d = 125
+    resize = ->
+      h = $window.innerHeight
+      $log.info "Resized to " + (h - d)
+      elm.css height: "#{h - d}px"
+
+    angular.element($window).on 'resize', -> scope.$apply resize
+
+    resize()
 

@@ -9,36 +9,36 @@ Controllers.controller 'AuthCtrl', ($scope, $http) ->
 
     {protocol, baseURL, publicPath} = $scope.apiInfo
     return unless baseURL
-    url = "#{ protocol }://#{ baseURL }#{ publicPath }/user"
+    url = "#{ protocol }://#{ baseURL }#{ publicPath }/user/whoami"
     req = $http.get(url, params: {token: $scope.auth.token})
     req.then ({data}) -> $scope.auth.username = data.user.username
     req.error -> $scope.auth.username = null
 
 Controllers.controller 'ParameterInputCtrl', ($scope, $q, $timeout, getSuggestions, parameterHistoryKey, Storage) ->
 
-    getStorageKey = ->
-      pidx = $scope.params.indexOf $scope.parameter
-      parameterHistoryKey $scope, $scope.parameter.Name, pidx
+  getStorageKey = ->
+    pidx = $scope.params.indexOf $scope.parameter
+    parameterHistoryKey $scope, $scope.parameter.Name, pidx
 
-    storeHistory = (hist) -> Storage.put getStorageKey(), JSON.stringify(hist)
+  storeHistory = (hist) -> Storage.put getStorageKey(), JSON.stringify(hist)
 
-    getHistory = ->
-      hist = Storage.get getStorageKey()
-      if hist?
-        try
-          JSON.parse hist
-        catch e
-          []
-      else
+  getHistory = ->
+    hist = Storage.get getStorageKey()
+    if hist?
+      try
+        JSON.parse hist
+      catch e
         []
+    else
+      []
 
-    $scope.getSuggestions = ->
-      if $scope.parameter.Options
-        return getSuggestions $scope.params, $scope.parameter
-      else
-        d = $q.defer()
-        d.resolve getHistory()
-        return d.promise
+  $scope.getSuggestions = ->
+    if $scope.parameter.Options
+      return getSuggestions $scope.params, $scope.parameter
+    else
+      d = $q.defer()
+      d.resolve getHistory()
+      return d.promise
 
 Controllers.controller 'EndpointList', ->
 
@@ -75,17 +75,11 @@ Controllers.controller 'ParameterCtrl', ($scope, getDefaultValue) ->
     if p.currentValue is p.Default
       getDefaultValue($scope.params, p).then (v) -> p.currentValue = v
 
-updateLocation = (loc, scope) ->
-  httpMethod = scope.currentMethod.HTTPMethod
-  uri = scope.currentMethod.URI
-  newLoc = "/#{ scope.endpoint.identifier }/#{ httpMethod }#{ uri }"
-  loc.replace().path newLoc
-
 getCurrentValue = (ps, name) -> return p.currentValue for p in ps when p.Name is name
 
 Controllers.controller 'MethodCtrl', ($scope, $http, getRepetitions, Defaults, ParamUtils, Storage, parameterHistoryKey, Markdown) ->
   $scope.params = angular.copy($scope.m.parameters)
-  $scope.m.show ?= 'desc'
+  $scope.show = desc: true
 
   $scope.description = $scope.m.Description
   if 'markdown' is $scope.m.DescriptionFormat
@@ -159,43 +153,57 @@ Controllers.controller 'MethodCtrl', ($scope, $http, getRepetitions, Defaults, P
     $http.post('run', query).then ({data}) ->
       data.query = query
       m.results.push data
-      m.show = 'res'
+      $scope.show = res: true
 
-Controllers.controller 'EndpointDetails', ($scope, $routeParams, $http, $location, Storage) ->
+EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
 
-  $scope.currentEndpoint = $routeParams.endpointName
-  httpMethod = $routeParams.method
-  path = '/' + $routeParams.servicePath
+  updateLocation = ->
+    return unless $scope.currentMethod?
+    {HTTPMethod, URI} = $scope.currentMethod
+    newLoc = "/#{ $scope.endpoint.identifier }/#{ HTTPMethod }#{ URI }"
+    $log.info newLoc
+    $location.replace().path newLoc
 
-  $scope.endpoint = e for e in $scope.endpoints when e.identifier is $scope.currentEndpoint
+  methodMatches = (m) ->
+    m.HTTPMethod is $routeParams.method and m.URI is $routeParams.servicePath
 
-  return unless $scope.endpoint
+  initMethod = (m) ->
+    m.active = true
+    m.results ?= []
+    body = m.body?[0]
+    m.bodyContentType = body?.contentType
+    m.content = body?.example
+
+  methodWatch = (s) ->
+    {currentMethod, URI} = s.currentMethod
+    currentMethod + URI
+
+  currentEndpoint = $routeParams.endpointName
+  $scope.endpoint = e for e in $scope.endpoints when e.identifier is currentEndpoint
+
+  unless $scope.endpoint
+    return $log.warn 'Endpoint not found', currentEndpoint
 
   if httpMethod? and path?
-    $scope.currentMethod = m for m in $scope.endpoint.methods when m.URI is path and m.HTTPMethod is httpMethod
+    $scope.currentMethod = m for m in $scope.endpoint.methods when methodMatches m
   else
     $scope.currentMethod = $scope.endpoint.methods[0]
 
   m.active = false for m in $scope.endpoint.methods
-  cm = $scope.currentMethod
+  initMethod $scope.currentMethod
 
-  cm.active = true
-  cm.results ?= []
-  body = cm.body?[0]
-  cm.bodyContentType = body?.contentType
-  cm.content = body?.example
+  $log.info $scope.currentMethod
 
-  console.log $scope.currentMethod
+  updateLocation()
 
-  updateLocation $location, $scope
   $scope.methodChanged = ->
     [cm] = (m for m in $scope.endpoint.methods when m.active)
     return unless cm?
     $scope.currentMethod = cm
 
-  $scope.$watch ((s) -> s.currentMethod.HTTPMethod + s.currentMethod.URI), (nv, ov) ->
-    updateLocation($location, $scope) if ov
+  $scope.$watch methodWatch, updateLocation
 
+Controllers.controller 'EndpointDetails', EndpointCtrl
 
 c = 0
 
@@ -253,10 +261,16 @@ Controllers.controller 'ResponseCtrl', ($scope, xmlParser) ->
       for k, v of parsed
         $scope.parsedData.push(parseNode(k, v))
     else if /^text\/xml/.test(ct) or /^application\/xml/.test(ct)
-      dom = xmlParser.parse($scope.res.response)
-      $scope.parsedData.push(parseDOMElem(dom.documentElement))
+      try
+        dom = xmlParser.parse $scope.res.response
+        $scope.parsedData.push(parseDOMElem(dom.documentElement))
+      catch e
+        console.log 'Error parsing xml', e
 
   $scope.isHTML = -> !!ct?.match /^text\/html/
+
+  processingInstructions = /<\?[^?]*\?>/g
+  $scope.cleanHTML = $scope.res.response.replace(processingInstructions, '')
 
   if ct.match(/separated/)
     patt = if ct.match(/comma/) then /,/ else /\t/

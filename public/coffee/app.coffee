@@ -26,7 +26,6 @@ IODocs.run ($http, $rootScope, Storage) ->
          .then ({data: {version}}) ->
             $rootScope.apiInfo.apiVersion = version
 
-
 IODocs.config ($routeProvider) ->
   $routeProvider.when '/',
     templateUrl: '/partials/endpoint-list.html',
@@ -34,7 +33,7 @@ IODocs.config ($routeProvider) ->
   $routeProvider.when '/:endpointName',
     templateUrl: '/partials/endpoint-details.html',
     controller: 'EndpointDetails'
-  $routeProvider.when '/:endpointName/:method/:servicePath*',
+  $routeProvider.when '/:endpointName/:method:servicePath*',
     templateUrl: '/partials/endpoint-details.html',
     controller: 'EndpointDetails'
   $routeProvider.otherwise redirectTo: '/'
