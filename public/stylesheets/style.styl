@@ -1,23 +1,46 @@
-@import url("http://fonts.googleapis.com/css?family=Sintony")
-@import url(http://fonts.googleapis.com/css?family=Roboto)
-@import url("http://fonts.googleapis.com/css?family=Roboto+Condensed")
+@import url("/fonts/sintony.css")
+@import url("/fonts/roboto.css")
+@import url("/fonts/roboto-condensed.css")
 
 @font-face
     font-family DroidSansMono
-    src local("Droid Sans Mono"), url("http://fonts.googleapis.com/css?family=Droid+Sans+Mono")
+    src local("Droid Sans Mono"), url(/fonts/droidsansmono.css)
 
-pale = #7a7a7a
+pale = rgb(241, 242, 246)
+dark = #2c3e50
+monospace = "DroidSansMono", "Inconsolata", "Consolas", "monospace"
 
-since
-    float right
+.nav,
+.pagination,
+.carousel,
+.panel-title a
+    cursor: pointer
+
+.since
+    absolute top 2em right 3em
     font-size 0.8em
-    color pale
+    color dark
 
 .responses
     .metadata
         margin 1em 0 1em 0
 
-monospace = "DroidSansMono", "Inconsolata", "Consolas", "monospace"
+.navbar-custom
+    position: fixed;
+    top: 0;
+    left: 0;
+    border-radius: 0;
+    // border-color: rgba(204, 204, 204, 0.8)
+    // background-color: rgba(255,255,255,.9);
+    z-index: 2000;
+
+    .navbar-nav > .active > a
+        background dark
+        opacity 0.9
+
+.navbar-custom,
+.navbar-header
+    width: 100%;
 
 pre,
 code,
@@ -43,25 +66,34 @@ textarea
     font-weight normal
 
 body
+    background pale
     padding-top 50px
 
 .navbar-header
-    font-family 'Sintony', Roboto, 'Helvetica Neue', Helvetica, Arial, Tahoma, sans-serif
+    font-family Sintony, Roboto, 'Helvetica Neue', Helvetica, Arial, Tahoma, sans-serif
     font-weight 400
 
     .navbar-brand
-        color rgb(68, 68, 68)
+        // color dark
         font-size 36px
 
+sidebar-width = 20%
+
 #io-footer
-    padding 1em 4em
+    width: sidebar-width
+    height: 75px
+    fixed bottom left
+    background-color dark
+    color pale
+    padding 1em
 
 .sidebar
+    fixed top 50px left
+    width sidebar-width
+    box-sizing border-box
+    background dark
     padding-right 0
     padding-top 15px
-    border-right 1px solid rgb(231, 231, 231)
-    font-family "Roboto Condensed", 'Helvetica Neue', Helvetica, Arial, Tahoma, sans-serif
-    font-size 12px
 
     .filter
         padding-left 0.5em
@@ -74,20 +106,54 @@ body
         max-height 150px
 
         li > a
+            color #fff
             padding 5px 15px
             border-radius 0
 
-        @media screen and (min-width: 800px)
-            max-height 800px
+            &:hover
+                color dark
+                background darken(pale, 10%)
 
-    @media screen and (min-width: 1000px)
-        font-family "Roboto", 'Helvetica Neue', Helvetica, Arial, Tahoma, sans-serif
-        font-size 14px
+        .active > a
+            color dark
+            background pale
+
+        @media screen and (min-width: 800px)
+            max-height 88%
+
+focussed-menu()
+  color: white;
+  background-color: #656d78;
+  outline: none;
 
 centered(n)
     width n
     margin-left auto
     margin-right auto
+
+.endpoint-card
+    float: left
+    width: 340px
+    height: 280px
+    margin: 2em 0 0 2em
+
+.endpoint
+    position absolute
+    box-sizing border-box
+    left sidebar-width
+    width 100% - sidebar-width
+
+    padding-left 0
+    padding-right 0
+
+    .header
+        border-radius 0
+
+    .tabbable > .tab-content
+        padding 0
+
+    .tabbable > .nav-tabs a
+        font-weight bold
 
 .api-list
     list-style-type none
@@ -117,29 +183,23 @@ form.custom
 
 .method
 
-    padding-top 2em
+    .summary
+        position relative
 
-    .description
-        padding-bottom 2em
+        .auth-info
+            absolute bottom left
+            .label
+                font-size 14px
+
+    background #fff
+    padding 2em
+
+    .summary .description
+        centered 80%
         text-align justify
 
         code
             white-space pre
-
-        table
-            min-width 75%
-            border-collapse collapse
-            margin-bottom 1em
-
-            th,
-            td
-                padding 0.2em 1em
-
-            tbody > tr > td
-                border-top 1px solid rgb(221, 221, 221)
-                font-family monospace
-                font-size 0.9em
-
 
     pre
         font-size 12px
@@ -155,7 +215,7 @@ form.custom
 
 
     accordion .panel
-        max-width 600px
+        max-width 90%
         .panel-title
             font-weight bold
 
@@ -164,16 +224,88 @@ form.custom
             font-family monospace
             font-size 0.9em
 
+.method .description,
+.from-html
+    table
+        width 100%
+        border-collapse collapse
+        margin-bottom 1em
+
+        th,
+        td
+            padding 0.2em 1em
+
+        tbody > tr > td
+            border-top 1px solid rgb(221, 221, 221)
+            font-family monospace
+            font-size 0.9em
+
 .parameter
+    button.boolean
+        margin-left 5em
     .caption
+        padding 0.5em
         .description
             font-size 0.9em
         .type
+            margin-left 3em
             font-family monospace
-            float right
     .is-active
         float right
 
+/**
+ * dropdown-menu
+ * --------------------------------------------------
+ */
+.dropdown-menu
+    border: none;
+    background-color: #434a54;
 
+    .dropdown-header
+        padding: 5px 20px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #aab2bd;
 
+    li a
+        padding: 5px 20px
+        color: white
+    
+        &:hover,
+        &:focus
+            focussed-menu()
 
+    .active
+        a,
+        a:hover,
+        a:focus
+            focussed-menu()
+    
+    .disabled a
+        color: #656d78;
+        cursor: default;
+        
+        &:hover
+            color: #656d78;
+            cursor: default;
+        
+    .divider
+        background-color: #656d78;
+        border-bottom: none;
+
+.endpoint-card.panel
+
+    border-color dark
+
+    & > .panel-heading
+        color #ffffff
+        background-color dark
+        border-color dark
+
+        a
+            color #ffffff
+
+.btn-default
+    color dark
+    background-color pale
+    border-color pale
