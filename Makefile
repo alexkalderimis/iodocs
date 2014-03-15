@@ -6,19 +6,13 @@
 
 export PATH := $(PATH):$(shell find node_modules -name 'bin' -printf %p:)node_modules/.bin
 
-deps:
-	npm install ukraine@latest
-
-deploy: deps
-	chernobyl deploy labs.intermine.org .
-
-style:
-	compass compile --sass-dir public/stylesheets/scss/ --css-dir public/stylesheets/
-
-run: style
-	node app.js
-
 test:
 	@echo No Tests!
+
+deploy:
+	git push ukraine
+
+run:
+	node app.js
 
 .PHONY: test
