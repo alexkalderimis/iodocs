@@ -1,5 +1,5 @@
-.row
-  .col-sm-3.sidebar(ng-controller="SidebarCtrl")
+.row.endpoint-view
+  .sidebar(resize, ng-controller="SidebarCtrl")
 
     .input-group.filter
       span.input-group-addon
@@ -9,16 +9,17 @@
         button.btn.btn-default(ng-click="endpointFilter = null") Clear
 
     ul.nav.nav-pills.nav-stacked.endpoints
-      li(ng-repeat="e in endpoints | filter:endpointFilter", ng-class="{active: e.identifier == currentEndpoint}")
+      li(ng-repeat="e in endpoints | filter:endpointFilter", ng-class="{active: e === endpoint}")
         a(href="#/{{e.identifier}}") {{e.name}}
 
-  .col-sm-9
+  .endpoint
 
-    h2 {{endpoint.name}}
+    .header.alert
+      .since Since version: {{endpoint.minVersion}}
+      h2 {{endpoint.name}}
 
-    .since Since version: {{endpoint.minVersion}}
 
-    tabset
+    tabset(justified="true")
       tab(ng-repeat="m in endpoint.methods",
         select="methodChanged()",
         deselect="methodChanged()",
@@ -28,16 +29,18 @@
         .method(ng-controller="MethodCtrl")
 
           accordion(close-others="true")
-            accordion-group(is-open="m.show == 'desc'", heading = "Description")
+            accordion-group.accordion-panel.summary(is-open="show.desc", heading = "Description")
               .description(ng-if="htmlDesc", ng-bind-html="description")
               .description(ng-if="!htmlDesc") {{description}}
 
               .auth-info(ng-show="m.RequiresAuthentication")
                 span.label(ng-class="{'label-danger': !auth.username, 'label-success': auth.username}") Requires authentication
 
-            accordion-group.parameters(is-open="m.show == 'params'", heading="Parameters")
+              button.btn.btn-large.btn-primary.pull-right(ng-click="run()") Try It!
 
-              form(role="form")
+            accordion-group.parameters.accordion-panel(is-open="show.params", heading="Parameters")
+
+              form.form-horizontal(role="form")
 
                 http-parameter(ng-repeat="parameter in params")
 
@@ -53,10 +56,17 @@
 
               button.btn.btn-primary(ng-click="run(m.HTTPMethod)") Run with these parameters
 
-            accordion-group.results(heading="Results", is-open="m.show == 'res'")
+            accordion-group.results.accordion-panel(heading="Results", is-open="show.res")
               accordion
-                accordion-group(ng-repeat="res in m.results", is-open="{{$last}}")
+                accordion-group(ng-class="{'panel-success': res.code < 400, 'panel-danger': res.code >= 400}",
+                                ng-repeat="res in m.results", is-open="{{$last}}")
                   accordion-heading {{$index + 1}}: {{res.query.httpMethod}} {{res.call}} {{res.code}}
 
                   include response-display
+
+              .no-results(ng-if="!m.results.length")
+                p.apology
+                  | No results yet - click 
+                  a.btn.btn-primary.btn-xs(ng-click="run()") here
+                  |  to run this API method.
 

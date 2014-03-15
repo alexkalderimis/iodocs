@@ -1,10 +1,16 @@
+// views/listAPIs
+
+extends ng-layout
+
 h1=title
 
-h2 Choose an API
+block content
 
-ul.api-list
-   - for (var api in apiInfo)
-     li
-       a(href = '/' + api) #{apiInfo[api].name}
+  h2 Choose an API
 
-a.btn.large(href = 'custom') Add a web-service.
+  ul.api-list
+    - for (var api in apis)
+      li
+        a(href = '/' + api + '/docs') #{apis[api].name}
+
+  a.btn.large(href = 'custom') Add a web-service.

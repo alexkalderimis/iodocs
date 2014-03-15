@@ -44,7 +44,7 @@
       .parsed-data(angular-treeview, tree-model="parsedData", tree-id="responsetree")
     tab.view(ng-if="!parsedData.length")
       tab-heading View
-      .from-html(ng-if="isHTML()", ng-bind-html="res.response")
+      .from-html(ng-if="isHTML()", ng-bind-html="cleanHTML")
       .from-flat-file(ng-if="flatFile")
         table.table
           thead

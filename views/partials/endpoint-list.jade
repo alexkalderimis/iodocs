@@ -1,7 +1,14 @@
 .row
-  .col-sm-3.col-md-2(ng-repeat="endpoint in endpoints")
-    .thumbnail
+  .endpoint-card.panel(ng-repeat="endpoint in endpoints")
+    .panel-heading
       h3
-        a(href="#/{{endpoint.identifier}}")
-          {{endpoint.name}}
-      {{endpoint.URI}}
+        a(href="#/{{endpoint.identifier}}") {{endpoint.name}}
+    .panel-body
+      .list-group(ng-if="!endpoint.methods.length")
+        span.label.label-warning Undocumented
+      .list-group(ng-if="endpoint.methods.length")
+        a.list-group-item(
+          ng-repeat="method in endpoint.methods",
+          href="#/{{endpoint.identifier}}/{{method.HTTPMethod}}{{method.URI}}")
+            | {{method.HTTPMethod}} {{method.URI}}
+

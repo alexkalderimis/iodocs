@@ -1,13 +1,19 @@
-.navbar.navbar-default.navbar-fixed-top(role="navigation")
+.navbar.navbar-custom.navbar-default.navbar-fixed-top(role="navigation")
   .container-fluid
     .navbar-header
       .row
         .col-sm-4
-          span.navbar-brand #{apiInfo().name}
+          span.navbar-brand
+            span.muted.hidden-sm.hidden-xs API for
+            | &nbsp;
+            span.api-name #{apiInfo().name}
+
         .col-sm-2
-          p.navbar-text
-            | API version
-            span.badge {{apiInfo.apiVersion}}
+          ul.nav.navbar-nav
+            li.active
+              a(href="#")
+                | API version &nbsp;
+                span.badge {{apiInfo.apiVersion}}
         .col-sm-6(ng-controller="AuthCtrl")
           form.navbar-form.navbar-right
             .form-group

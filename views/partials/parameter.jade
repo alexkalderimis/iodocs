@@ -1,11 +1,20 @@
-.form-group.parameter(ng-switch="parameter.Type")
-  input.is-active(ng-disabled="!switchable", type="checkbox", ng-model="parameter.active")
-  label(ng-if="!variableName") {{parameter.Name}}
-  input(ng-if="variableName", ng-model="parameter.currentName")
-  parameter-input(param = "parameter")
-  .caption
-    span.description {{parameter.Description}}
-    button.btn.btn-sm.pull-right(ng-if="repeatable", ng-click="addParam()") add
-    button.btn.btn-sm.pull-right(ng-if="removable", ng-click="removeParam()") remove
-    span.type {{type}}
+.form-group.parameter
+
+  label.col-sm-2(ng-if="!variableName") {{parameter.Name}}
+  .col-sm-2(ng-if="variableName")
+    input.form-control(type="text", placeholder="parameter name", ng-model="parameter.currentName")
+
+  .col-sm-10
+    .input-group
+      parameter-input(param = "parameter")
+      .input-group-addon
+        input.is-active(ng-disabled="!switchable", type="checkbox", ng-model="parameter.active")
+      
+    .caption
+      .pull-right
+        .btn-group.btn-group-sm
+          button.btn.btn-default(type="button", ng-if="repeatable", ng-click="addParam()") add
+          button.btn.btn-default(type="button", ng-if="removable", ng-click="removeParam()") remove
+        span.type {{type}}
+      span.description.help-block {{parameter.Description}}
 
