@@ -77,7 +77,7 @@ Controllers.controller 'ParameterCtrl', ($scope, getDefaultValue) ->
 
 getCurrentValue = (ps, name) -> return p.currentValue for p in ps when p.Name is name
 
-Controllers.controller 'MethodCtrl', ($scope, $http, getRepetitions, Defaults, ParamUtils, Storage, parameterHistoryKey, Markdown) ->
+Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defaults, ParamUtils, Storage, parameterHistoryKey, Markdown) ->
   $scope.params = angular.copy($scope.m.parameters)
   $scope.show = desc: true
 
@@ -139,7 +139,6 @@ Controllers.controller 'MethodCtrl', ($scope, $http, getRepetitions, Defaults, P
       params: {}
 
     for p, i in $scope.params when p.active
-      console.log p
       query.params[p.currentName] = p.currentValue
       saveParamValueToHistory p
 
@@ -148,7 +147,7 @@ Controllers.controller 'MethodCtrl', ($scope, $http, getRepetitions, Defaults, P
         Format: m.bodyContentType
         Content: m.content
 
-    console.log(query)
+    $log.debug(query)
 
     $http.post('run', query).then ({data}) ->
       data.query = query
@@ -161,7 +160,7 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
     return unless $scope.currentMethod?
     {HTTPMethod, URI} = $scope.currentMethod
     newLoc = "/#{ $scope.endpoint.identifier }/#{ HTTPMethod }#{ URI }"
-    $log.info newLoc
+    $log.debug newLoc
     $location.replace().path newLoc
 
   methodMatches = (m) ->
@@ -192,7 +191,7 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
   m.active = false for m in $scope.endpoint.methods
   initMethod $scope.currentMethod
 
-  $log.info $scope.currentMethod
+  $log.debug $scope.currentMethod
 
   updateLocation()
 
@@ -244,7 +243,7 @@ expandTree = (tree, setting) ->
     node.collapsed = setting
     expandTree node.children, setting
 
-Controllers.controller 'ResponseCtrl', ($scope, xmlParser) ->
+Controllers.controller 'ResponseCtrl', ($scope, $log, xmlParser) ->
 
   $scope.navType = 'pills'
   $scope.showheaders = false
@@ -265,7 +264,7 @@ Controllers.controller 'ResponseCtrl', ($scope, xmlParser) ->
         dom = xmlParser.parse $scope.res.response
         $scope.parsedData.push(parseDOMElem(dom.documentElement))
       catch e
-        console.log 'Error parsing xml', e
+        $log.error 'Error parsing xml', e
 
   $scope.isHTML = -> !!ct?.match /^text\/html/
 

@@ -4,8 +4,8 @@ IODocs = angular.module 'iodocs', [
   'ui.bootstrap', 'angularTreeview'
 ]
 
-IODocs.run ($http, $rootScope, Storage) ->
-  console.log("Initialising iodocs")
+IODocs.run ($http, $log, $rootScope, Storage) ->
+  $log.debug("Initialising iodocs")
   $rootScope.endpoints = []
   $rootScope.auth = {}
   $rootScope.apiInfo = {}

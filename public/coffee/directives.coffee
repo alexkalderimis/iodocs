@@ -51,7 +51,7 @@ IODirectives.directive 'resize', ($window, $log) ->
     d = 125
     resize = ->
       h = $window.innerHeight
-      $log.info "Resized to " + (h - d)
+      $log.debug "Resized to " + (h - d)
       elm.css height: "#{h - d}px"
 
     angular.element($window).on 'resize', -> scope.$apply resize
