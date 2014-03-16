@@ -163,8 +163,10 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
     $log.debug newLoc
     $location.replace().path newLoc
 
+  $log.debug $routeParams
+
   methodMatches = (m) ->
-    m.HTTPMethod is $routeParams.method and m.URI is $routeParams.servicePath
+    (m.HTTPMethod is $routeParams.method) and (m.URI is $routeParams.servicePath)
 
   initMethod = (m) ->
     m.active = true
@@ -174,8 +176,8 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
     m.content = body?.example
 
   methodWatch = (s) ->
-    {currentMethod, URI} = s.currentMethod
-    currentMethod + URI
+    {HTTPMethod, URI} = s.currentMethod
+    HTTPMethod + URI
 
   currentEndpoint = $routeParams.endpointName
   $scope.endpoint = e for e in $scope.endpoints when e.identifier is currentEndpoint
@@ -183,7 +185,7 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
   unless $scope.endpoint
     return $log.warn 'Endpoint not found', currentEndpoint
 
-  if httpMethod? and path?
+  if $routeParams.method and $routeParams.servicePath
     $scope.currentMethod = m for m in $scope.endpoint.methods when methodMatches m
   else
     $scope.currentMethod = $scope.endpoint.methods[0]
