@@ -1,35 +1,52 @@
 // views/custom
 
-h1 Add a custom API
+extends ng-layout
 
-div.constainer-fluid
+h1='Add an API'
 
-  if error
-    div.error
-      p #{ error }
+block content
+
+  .navbar.navbar-custom.navbar-default.navbar-fixed-top(role="navigation")
+    .container-fluid
+      .navbar-header
+        .row
+          .col-sm-10
+            span.navbar-brand Add an InterMine Web-Service
+          .col-sm-2
+            ul.nav.navbar-nav
+              li
+                a(href="/")
+                  i.glyphicon.glyphicon-th-large
+                  |  See all
+
+  div.constainer-fluid
+
+    if error
+      .alert.alert-danger
+        p #{ error }
 
   form.form-horizontal.custom(method='POST')
 
-    .control-group
-      label.control-label(for='slug')
+    .form-group
+      label.col-sm-2.control-label(for='slug')
         span Name
-      .controls
-        input(type='text', name='slug')
-    .control-group
-      label.control-label(for='name')
+      .col-sm-10
+        input.form-control(required="true", type='text', name='slug')
+    .form-group
+      label.col-sm-2.control-label(for='name')
         span Description
-      .controls
-        input(type='text', name='name')
-    .control-group
-      label.control-label
+      .col-sm-10
+        input.form-control(type='text', name='name')
+    .form-group
+      label.col-sm-2.control-label
         span URI
-      .controls
-        .input-prepend.input-append
-          span.add-on http://
-          input.span3(type='text', name='baseURL')
-          span.add-on /
-          input.span3(type='text', name='publicPath')
-          span.add-on /service
+      .col-sm-10
+        .input-group
+          span.input-group-addon http://
+          input.span3.form-control(required="true", type='text', name='baseURL')
+          span.input-group-addon /
+          input.span3.form-control(required="false", type='text', name='publicPath')
+          span.input-group-addon /service
 
     input(type='hidden', name='protocol', value='http')
     input(type='hidden', name='version', value='/version')
@@ -39,10 +56,11 @@ div.constainer-fluid
     input(type='hidden', name='booleanTrueVal', value='true')
     input(type='hidden', name='booleanFalseVal', value='false')
 
-    input(type='submit', value='add')
+    button.btn.btn-large.btn-primary(type='submit', value='add')
+      i.glyphicon.glyphicon-floppy-disk 
+      |  Add
 
-
-
-
+block scripts
+  script(src='/javascripts/vendor/angular.min.js')
 
 // end views/custom
