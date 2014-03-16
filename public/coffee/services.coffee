@@ -136,3 +136,18 @@ Services.factory 'parameterHistoryKey', -> (scope, pname) ->
 Services.factory 'Markdown', ($window) ->
   parse: (src) -> $window.markdown?.toHTML(src, 'Maruku') ? src
 
+Services.factory 'Selection', ($window, $log) ->
+  select: (el) ->
+    $log.info el
+    el.focus()
+    doc = $window.document
+    if $window.getSelection and doc.createRange
+      sel = $window.getSelection()
+      range = doc.createRange()
+      range.selectNodeContents(el)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    else if (doc.body.createTextRange)
+      range = doc.body.createTextRange()
+      range.moveToElementText(el)
+      range.select()
