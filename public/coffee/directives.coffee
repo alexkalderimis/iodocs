@@ -58,3 +58,13 @@ IODirectives.directive 'resize', ($window, $log) ->
 
     resize()
 
+IODirectives.directive 'scrollIf', ($log) ->
+  restrict: 'A'
+  link: (scope, elem, attrs) ->
+    getOffsetTop = ([el]) -> el.offsetTop
+    scrollIntoView = ->
+      po = getOffsetTop elem.parent()
+      eo = getOffsetTop elem
+      elem.parent()[0].scrollTop = eo - po
+    setTimeout -> scrollIntoView() if scope.$eval(attrs.scrollIf)
+

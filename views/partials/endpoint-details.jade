@@ -9,7 +9,9 @@
         button.btn.btn-default(ng-click="endpointFilter = null") Clear
 
     ul.nav.nav-pills.nav-stacked.endpoints
-      li(ng-repeat="e in endpoints | filter:endpointFilter", ng-class="{active: e === endpoint}")
+      li(ng-repeat="e in endpoints | filter:endpointFilter",
+        scroll-if="e === endpoint",
+        ng-class="{active: e === endpoint}")
         a(href="#/{{e.identifier}}") {{e.name}}
 
   .endpoint
