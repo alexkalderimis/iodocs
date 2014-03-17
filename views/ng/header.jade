@@ -19,9 +19,9 @@
             .form-group
               .input-group
                 span.input-group-addon
-                  span(ng-show="auth.username") Logged in as {{auth.username}}
-                  span(ng-hide="auth.username") Not logged in
-                input.form-control(ng-hide="auth.username", type="text", ng-model="auth.token", placeholder="API token")
-                span.input-group-btn(ng-if="auth.username")
-                  button.btn.btn-default(ng-click="auth.token = null") Log Out
+                  span(ng-show="auth.loggedIn")  Logged in {{auth.username ? 'as ' + auth.username : 'anonymously'}}
+                  span(ng-hide="auth.loggedIn") Not logged in
+                input.form-control(ng-hide="auth.loggedIn", type="text", ng-model="auth.token", placeholder="API token")
+                span.input-group-btn(ng-if="auth.loggedIn")
+                  button.btn.btn-default(ng-click="logOut()") Log Out
 

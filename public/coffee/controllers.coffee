@@ -3,6 +3,9 @@ Controllers = angular.module 'iodocs.controllers', ['xml']
 Controllers.controller 'SidebarCtrl', ->
 
 Controllers.controller 'AuthCtrl', ($scope, $http) ->
+  $scope.logOut = ->
+    $scope.auth.loggedIn = false
+    $scope.auth.token = null
   $scope.$watch ((s) -> "#{s.auth.token}#{s.apiInfo.baseURL}"), ->
     unless $scope.auth.token
       return $scope.auth.username = null
@@ -11,8 +14,10 @@ Controllers.controller 'AuthCtrl', ($scope, $http) ->
     return unless baseURL
     url = "#{ protocol }://#{ baseURL }#{ publicPath }/user/whoami"
     req = $http.get(url, params: {token: $scope.auth.token})
-    req.then ({data}) -> $scope.auth.username = data.user.username
-    req.error -> $scope.auth.username = null
+    req.then ({data}) ->
+      $scope.auth.loggedIn = true
+      $scope.auth.username = data.user.username # may be null, if anonymous
+    req.error $scope.logOut
 
 Controllers.controller 'ParameterInputCtrl', ($scope, $q, $timeout, getSuggestions, parameterHistoryKey, Storage) ->
 
