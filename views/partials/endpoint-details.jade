@@ -34,7 +34,7 @@
               .description(ng-if="!htmlDesc") {{description}}
 
               .auth-info(ng-show="m.RequiresAuthentication")
-                span.label(ng-class="{'label-danger': !auth.username, 'label-success': auth.username}") Requires authentication
+                span.label(ng-class="{'label-danger': !auth.loggedIn, 'label-success': auth.loggedIn}") Requires authentication
 
               button.btn.btn-large.btn-primary.pull-right(ng-click="run()") Try It!
 
