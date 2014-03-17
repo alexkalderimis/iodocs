@@ -10,7 +10,7 @@ test:
 	@echo No Tests!
 
 deploy:
-	git push ukraine
+	git push ukraine master
 
 run:
 	node app.js
