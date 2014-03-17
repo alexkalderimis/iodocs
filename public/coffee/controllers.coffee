@@ -147,7 +147,7 @@ Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defau
       query.params[p.currentName] = p.currentValue
       saveParamValueToHistory p
 
-    if m.content
+    if m.content and m.bodyContentType isnt 'none'
       query.body =
         Format: m.bodyContentType
         Content: m.content
@@ -228,8 +228,9 @@ parseNode = (k, v) ->
   return node
 
 parseDOMElem = (elem) ->
+  textTag = '$$CONTENT$$'
   node =
-    label: (elem.tagName or 'CONTENT')
+    label: (elem.tagName or textTag)
     id: c++
     children: []
   if elem.attributes?
@@ -242,7 +243,9 @@ parseDOMElem = (elem) ->
   if elem.nodeValue?
     node.children.push label: elem.nodeValue.replace(/(^\s+|\s+$)/g, ''), id: c++, children: []
   # Prune useless children
-  node.children = (c for c in node.children when c.label and not (c.label is 'CONTENT' and c.children.length is 0))
+  node.children = (c for c in node.children when c.label and not (c.label is textTag and c.children.length is 0))
+  # Promote text tags to first level kids.
+  node.children = node.children.map (c) -> if c.label is textTag then c.children[0] else c
   return node
 
 expandTree = (tree, setting) ->
@@ -263,7 +266,10 @@ Controllers.controller 'ResponseCtrl', ($scope, $log, xmlParser) ->
   ct = $scope.headers['content-type']
   if $scope.res.response?.length
     if ct.match(/^application\/json/)
-      parsed = JSON.parse($scope.res.response)
+      parsed = try
+        JSON.parse($scope.res.response)
+      catch e
+        {}
       for k, v of parsed
         $scope.parsedData.push(parseNode(k, v))
     else if /^text\/xml/.test(ct) or /^application\/xml/.test(ct)
