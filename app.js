@@ -63,7 +63,7 @@ try {
 }
 
 var CAN_HAVE_BODY = function (method) {
-  return ['POST','PUT','DELETE'].indexOf(method) >= 0;
+  return ['POST','PUT'].indexOf(method) >= 0;
 };
 
 // Init logger.
