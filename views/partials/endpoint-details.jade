@@ -36,15 +36,21 @@
           h3 {{m.Synopsis}}
 
           accordion(close-others="true")
-            accordion-group.accordion-panel.summary(
-              is-open="show.desc || (show.params && !(params.length || m.body.length))",
-              heading = "Description")
+            accordion-group.accordion-panel.summary(is-open="show.desc")
+
+              accordion-heading
+                i.glyphicon(ng-class="{'glyphicon-chevron-down': show.desc, 'glyphicon-chevron-right': !show.desc}")
+                |  Description
               .description(ng-if="htmlDesc", ng-bind-html="description")
               .description(ng-if="!htmlDesc") {{description}}
 
               button.btn.btn-large.btn-primary.pull-right(ng-click="run()") Try It!
 
-            accordion-group.parameters.accordion-panel(ng-if="params.length || m.body.length", is-open="show.params", heading="Parameters")
+            accordion-group.parameters.accordion-panel(ng-if="params.length || m.body.length", is-open="show.params")
+
+              accordion-heading
+                i.glyphicon(ng-class="{'glyphicon-chevron-down': show.params, 'glyphicon-chevron-right': !show.params}")
+                |  Parameters
 
               form.form-horizontal(role="form")
 
@@ -63,7 +69,10 @@
 
               button.btn.btn-primary(ng-click="run(m.HTTPMethod)") Run with these parameters
 
-            accordion-group.results.accordion-panel(heading="Results", is-open="show.res")
+            accordion-group.results.accordion-panel(is-open="show.res")
+              accordion-heading
+                i.glyphicon(ng-class="{'glyphicon-chevron-down': show.res, 'glyphicon-chevron-right': !show.res}")
+                |  Results
               accordion
                 accordion-group(ng-class="{'panel-success': res.code < 400, 'panel-danger': (res.code >= 400 && res.code < 500), 'panel-warning': res.code > 500}",
                                 ng-repeat="res in m.results", is-open="{{$last}}")
