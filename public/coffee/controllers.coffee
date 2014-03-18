@@ -123,6 +123,9 @@ Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defau
   $scope.params = angular.copy($scope.m.parameters)
   $scope.show ?= params: true # Initially set params as the focus.
 
+  if $scope.show.params and not ($scope.params?.length or $scope.m.body?.length)
+    $scope.show = desc: true
+
   $scope.description = $scope.m.Description
   if 'markdown' is $scope.m.DescriptionFormat
     $scope.htmlDesc = true
@@ -202,14 +205,16 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
   updateLocation = ->
     return unless $scope.currentMethod?
     {HTTPMethod, URI} = $scope.currentMethod
-    newLoc = "/#{ $scope.endpoint.identifier }/#{ HTTPMethod }#{ URI }"
+    newLoc = "/#{ $scope.endpoint.identifier }/#{ HTTPMethod }#{ URI or '/' }"
     $log.debug newLoc
     $location.replace().path newLoc
 
   $log.debug $routeParams
 
+  # Slightly (read very) hacky workaround of the fact that the URI
+  # could be the empty string. 
   methodMatches = (m) ->
-    (m.HTTPMethod is $routeParams.method) and (m.URI is $routeParams.servicePath)
+    (m.HTTPMethod is $routeParams.method) and ((m.URI or '/') is $routeParams.servicePath)
 
   initMethod = (m) ->
     m.active = true
