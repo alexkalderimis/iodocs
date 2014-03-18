@@ -225,14 +225,15 @@ Services.factory 'TreeParsing', ($q, $timeout) ->
     def = $q.defer()
     pending = []
 
-    for node in tree
-      node.collapsed = setting
-      pending.push expandTree node.children, setting
+    $timeout ->
+      for node in tree
+        node.collapsed = setting
+        pending.push expandTree node.children, setting
 
-    if pending.length
-      $q.all(pending).then -> def.resolve tree
-    else
-      def.resolve tree
+      if pending.length
+        $q.all(pending).then -> def.resolve tree
+      else
+        def.resolve tree
 
     return def.promise
 
