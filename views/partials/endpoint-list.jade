@@ -9,7 +9,7 @@
       .list-group(ng-if="endpoint.methods.length")
         a.list-group-item(
           ng-repeat="method in endpoint.methods",
-          href="#/{{endpoint.identifier}}/{{method.HTTPMethod}}{{method.URI}}")
+          href="#/{{endpoint.identifier}}/{{method.HTTPMethod}}{{method.URI || '/'}}")
             | {{method.HTTPMethod}} {{method.URI}}
 
   .endpoint-filter
