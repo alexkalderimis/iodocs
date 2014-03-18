@@ -195,14 +195,15 @@ Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defau
 
     $log.debug(query)
 
-    dummyRes = {query, response: '', code: 'pending', call: "#{ m.HTTPMethod } #{ m.URI }"}
+    dummyRes = {query, call: m.URI, response: '', headers: [], code: 'pending'}
 
     $http.post('run', query).then ({data}) ->
       data.query = query
       i = m.results.indexOf dummyRes
       if i >= 0
-        m.results.splice i, 1
-      m.results.push data
+        m.results.splice i, 1, data
+      else
+        m.results.push data
 
     m.results.push dummyRes
     $scope.show = res: true
@@ -280,7 +281,7 @@ Controllers.controller 'ResponseCtrl', ($q, $timeout, $scope, $log, xmlParser, T
   $scope.parsedData = []
   $scope.tree = expanded: false
 
-  ct = $scope.headers['content-type']
+  ct = ($scope.headers['content-type'] ? '')
   promises = []
   if $scope.res.response?.length
     if ct.match(/^application\/json/)
