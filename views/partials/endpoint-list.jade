@@ -1,5 +1,5 @@
-.row
-  .endpoint.card.panel(ng-repeat="endpoint in endpoints")
+.row.endpoint-list
+  .endpoint.card.panel(ng-repeat="endpoint in endpoints | filter:endpointFilter")
     .panel-heading
       h3
         a(href="#/{{endpoint.identifier}}") {{endpoint.name}}
@@ -11,4 +11,15 @@
           ng-repeat="method in endpoint.methods",
           href="#/{{endpoint.identifier}}/{{method.HTTPMethod}}{{method.URI}}")
             | {{method.HTTPMethod}} {{method.URI}}
+
+  .endpoint-filter
+    form.form-inline(role="form")
+      .input-group.filter
+        span.input-group-addon(ng-click="showSearch = !showSearch")
+          i.glyphicon.glyphicon-search
+        input.form-control(
+          ng-hide="!showSearch",
+          focus-me="showSearch",
+          type="text",
+          ng-model="endpointFilter", placeholder="by term")
 

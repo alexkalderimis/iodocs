@@ -151,3 +151,89 @@ Services.factory 'Selection', ($window, $log) ->
       range = doc.body.createTextRange()
       range.moveToElementText(el)
       range.select()
+
+Services.factory 'TreeParsing', ($q, $timeout) ->
+  c = 0
+  textTag = '$$CONTENT$$'
+
+  parseDOMElem = (elem) ->
+    def = $q.defer()
+    $timeout ->
+      node =
+        label: (elem.tagName or textTag)
+        id: c++
+        children: []
+      childPromises = []
+
+      if elem.attributes?
+        for ai in [0 ... elem.attributes.length]
+          attr = elem.attributes[ai]
+          childPromises.push $q.when
+            label: """#{ attr.name } = "#{ attr.value }" """
+            id: c++
+            children: []
+      if elem.childNodes?
+        for ci in [0 ... elem.childNodes.length]
+          childPromises.push(parseDOMElem(elem.childNodes[ci]))
+      if elem.nodeValue?
+        childPromises.push $q.when
+          label: elem.nodeValue.replace(/(^\s+|\s+$)/g, ''),
+          id: c++,
+          children: []
+
+      if childPromises.length
+        # Need to wait for kids.
+        $q.all(childPromises).then (kids) ->
+          # Prune useless children
+          node.children = (k for k in kids when k.label and not (k.label is textTag and k.children.length is 0))
+          # Promote text tags to first level kids.
+          node.children = node.children.map (c) -> if c.label is textTag then c.children[0] else c
+          def.resolve node
+      else
+        def.resolve node
+
+    return def.promise
+
+  parseObj = (k, v) ->
+    def = $q.defer()
+    $timeout ->
+      node = label: k, id: c++, children: []
+      childPromises = []
+
+      if Array.isArray v
+        node.label += " [#{ v.length }]"
+        for e, i in v
+          childPromises.push parseObj(i, e)
+      else if angular.isObject(v)
+        node.label += " {#{ typeof v }}"
+        for kk, vv of v
+          childPromises.push parseObj(kk, vv)
+      else
+        node.label = "#{ k }: #{ JSON.stringify(v) }"
+
+      if childPromises.length
+        # Need to wait for kids.
+        $q.all(childPromises).then (kids) ->
+          node.children = kids
+          def.resolve node
+      else
+        def.resolve node
+
+    def.promise
+
+  expandTree = (tree, setting) ->
+    def = $q.defer()
+    pending = []
+
+    for node in tree
+      node.collapsed = setting
+      pending.push expandTree node.children, setting
+
+    if pending.length
+      $q.all(pending).then -> def.resolve tree
+    else
+      def.resolve tree
+
+    return def.promise
+
+  return {expandTree, parseObj, parseDOMElem}

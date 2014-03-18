@@ -1,5 +1,5 @@
 ng-switch(on="parameter.Type")
-  textarea.form-control(ng-change="change()", ng-model="parameter.currentValue", ng-switch-when="XML")
+  textarea.form-control.xml(ng-change="change()", ng-model="parameter.currentValue", ng-switch-when="XML")
   input.form-control(ng-change="change()", ng-model="parameter.currentValue", ng-switch-when="Integer", numeric, type="number")
   button.btn.btn-default.boolean(ng-change="change()", ng-model="parameter.currentValue", ng-switch-when="boolean", btn-checkbox)
     | {{parameter.currentValue || false }}

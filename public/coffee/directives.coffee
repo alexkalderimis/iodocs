@@ -68,3 +68,10 @@ IODirectives.directive 'scrollIf', ($log) ->
       elem.parent()[0].scrollTop = eo - po
     setTimeout -> scrollIntoView() if scope.$eval(attrs.scrollIf)
 
+IODirectives.directive 'focusMe', ($timeout, $parse) ->
+  restrict: 'A'
+  link: (scope, elem, attrs) ->
+    model = $parse(attrs.focusMe)
+    scope.$watch model, (value) -> if value
+      $timeout -> elem[0].focus()
+

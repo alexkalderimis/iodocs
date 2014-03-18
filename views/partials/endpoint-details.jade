@@ -30,17 +30,21 @@
 
         .method(ng-controller="MethodCtrl")
 
+          .auth-info(ng-show="m.RequiresAuthentication")
+            span.label(ng-class="{'label-danger': !auth.loggedIn, 'label-success': auth.loggedIn}") Requires authentication
+
+          h3 {{m.Synopsis}}
+
           accordion(close-others="true")
-            accordion-group.accordion-panel.summary(is-open="show.desc", heading = "Description")
+            accordion-group.accordion-panel.summary(
+              is-open="show.desc || (show.params && !(params.length || m.body.length))",
+              heading = "Description")
               .description(ng-if="htmlDesc", ng-bind-html="description")
               .description(ng-if="!htmlDesc") {{description}}
 
-              .auth-info(ng-show="m.RequiresAuthentication")
-                span.label(ng-class="{'label-danger': !auth.loggedIn, 'label-success': auth.loggedIn}") Requires authentication
-
               button.btn.btn-large.btn-primary.pull-right(ng-click="run()") Try It!
 
-            accordion-group.parameters.accordion-panel(is-open="show.params", heading="Parameters")
+            accordion-group.parameters.accordion-panel(ng-if="params.length || m.body.length", is-open="show.params", heading="Parameters")
 
               form.form-horizontal(role="form")
 

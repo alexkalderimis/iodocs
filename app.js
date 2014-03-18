@@ -259,7 +259,8 @@ function processRequest(req, res, next) {
         body = reqQuery.body,
         methodURL = reqQuery.methodUri,
         httpMethod = reqQuery.httpMethod,
-        apiKey = reqQuery.apiKey,
+        credentials = reqQuery.credentials,
+        authMechanism = reqQuery.auth,
         apiSecret = reqQuery.apiSecret,
         apiName = reqQuery.apiName
         apiConfig = apisConfig[apiName],
@@ -458,21 +459,46 @@ function processRequest(req, res, next) {
 
     // Unsecured API Call helper
     function unsecuredCall() {
+        var apiKey, username, password, encoded;
         logger.debug('Unsecured Call');
 
         if (body != null || !CAN_HAVE_BODY(httpMethod)) {
             options.path += ((paramString.length > 0) ? '?' + paramString : "");
         }
 
-        // Add API Key to params, if any.
-        if (apiKey != '' && apiKey != 'undefined' && apiKey != undefined) {
-            if (options.path.indexOf('?') !== -1) {
-                options.path += '&';
+        function addApiKey(param, value) {
+          var prefix = (options.path.indexOf('?') !== -1) ? '&' : '?';
+          options.path += prefix + param + '=' + value;
+        }
+
+        // Add credentials, if provided.
+        if (credentials) {
+          apiKey = credentials.token; 
+          if (!reqQuery.headerNames) reqQuery.headerNames = [];
+          if (!reqQuery.headerValues) reqQuery.headerValues = [];
+
+          if (authMechanism && authMechanism.type === 'password') {
+            username = credentials.username;
+            password = credentials.password;
+            if (username && password && authMechanism.mechanism === 'basic') {
+              encoded = new Buffer(username + ':' + password).toString('base64');
+              reqQuery.headerNames.push('Authorization');
+              reqQuery.headerValues.push('Basic ' + encoded);
+            } else {
+              logger.warn("Unknown password authentication type: " + authMechanism.type);
             }
-            else {
-                options.path += '?';
+          } else if (apiKey && authMechanism && authMechanism.type === 'token') {
+            if (authMechanism.mechanism === 'header') {
+              reqQuery.headerNames.push(authMechanism.key || 'Authorization');
+              reqQuery.headerValues.push((authMechanism.prefix || '') + apiKey);
+            } else if (authMechanism.mechanism === 'parameter') {
+              addApiKey(authMechanism.key, apiKey);
             }
-            options.path += apiConfig.keyParam + '=' + apiKey;
+          } else if (apiKey && apiConfig.keyParam) {
+            addApiKey(apiConfig.keyParam, apiKey);
+          } else {
+            logger.warn("Credentials provided, but API not configured to use them");
+          }
         }
 
         // Perform signature routine, if any.
@@ -493,9 +519,7 @@ function processRequest(req, res, next) {
 
         // Setup headers, if any
         if (reqQuery.headerNames && reqQuery.headerNames.length > 0) {
-            if (config.debug) {
-                logger.debug('Setting headers');
-            };
+            logger.debug('Setting headers');
             var headers = {};
 
             for (var x = 0, len = reqQuery.headerNames.length; x < len; x++) {

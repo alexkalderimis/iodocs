@@ -14,14 +14,34 @@
               a(href="#")
                 | API version &nbsp;
                 span.badge {{apiInfo.apiVersion}}
-        .col-sm-6(ng-controller="AuthCtrl")
+        .col-sm-6.api-auth(ng-controller="AuthCtrl")
           form.navbar-form.navbar-right
             .form-group
               .input-group
                 span.input-group-addon
                   span(ng-show="auth.loggedIn")  Logged in {{auth.username ? 'as ' + auth.username : 'anonymously'}}
                   span(ng-hide="auth.loggedIn") Not logged in
-                input.form-control(ng-hide="auth.loggedIn", type="text", ng-model="auth.token", placeholder="API token")
+                input.form-control.token(ng-if="auth.currentScheme.type == 'token'",
+                  ng-hide="auth.loggedIn",
+                  type="text",
+                  ng-model="auth.credentials.token",
+                  placeholder="API token")
+                input.form-control.basic.username(ng-if="auth.currentScheme.type == 'password'",
+                  ng-hide="auth.loggedIn",
+                  type="text",
+                  ng-model="auth.credentials.username",
+                  placeholder="Username")
+                input.form-control.basic.password(ng-if="auth.currentScheme.type == 'password'",
+                  ng-hide="auth.loggedIn",
+                  type="password",
+                  ng-model="auth.credentials.password",
+                  placeholder="Password")
                 span.input-group-btn(ng-if="auth.loggedIn")
                   button.btn.btn-default(ng-click="logOut()") Log Out
+                span.input-group-btn(ng-if="!auth.loggedIn && auth.schemes.length")
+                  button.btn.btn-default.dropdown-toggle(type="button", data-toggle="dropdown")
+                    span.caret
+                  ul.dropdown-menu.pull-right
+                    li(ng-repeat="scheme in auth.schemes", ng-class="{active: scheme === auth.currentScheme}")
+                      a(ng-click="auth.currentScheme = scheme") {{scheme.name}}
 

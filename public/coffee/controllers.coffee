@@ -2,22 +2,58 @@ Controllers = angular.module 'iodocs.controllers', ['xml']
 
 Controllers.controller 'SidebarCtrl', ->
 
-Controllers.controller 'AuthCtrl', ($scope, $http) ->
+Controllers.controller 'ErrorCtrl', ($log, $timeout, $scope) ->
+  $log.error $scope.error.msg
+  $scope.dismiss = ->
+    i = $scope.errors.indexOf $scope.error
+    $scope.errors.splice i, 1
+
+  $timeout $scope.dismiss, $scope.error.timeout
+
+Controllers.controller 'AuthCtrl', ($scope, $http, $log, Base64) ->
+  authWatcher   = (s) -> JSON.stringify [s.auth.currentScheme, s.auth.credentials, s.apiInfo.baseURL]
   $scope.logOut = ->
     $scope.auth.loggedIn = false
-    $scope.auth.token = null
-  $scope.$watch ((s) -> "#{s.auth.token}#{s.apiInfo.baseURL}"), ->
-    unless $scope.auth.token
-      return $scope.auth.username = null
+    $scope.auth.credentials = {}
+  basicHeader = ({username, password}) ->
+    encoded = Base64.encode "#{ username }:#{ password }"
+    "Basic #{ encoded }"
 
+  $scope.$watch authWatcher, ->
+    auth = $scope.auth.currentScheme
+    credentials = $scope.auth.credentials
     {protocol, baseURL, publicPath} = $scope.apiInfo
-    return unless baseURL
+
+    return unless (auth and credentials and baseURL)
+    $log.info credentials
+
     url = "#{ protocol }://#{ baseURL }#{ publicPath }/user/whoami"
-    req = $http.get(url, params: {token: $scope.auth.token})
+    conf = {}
+    switch auth.mechanism
+      when 'parameter'
+        if credentials.token
+          conf.params = {}
+          conf.params[auth.key] = credentials.token
+      when 'header'
+        if credentials.token
+          conf.headers = {}
+          conf.headers[auth.key] = auth.prefix + credentials.token
+      when 'basic'
+        if credentials.username and credentials.password
+          conf.headers = Authorization: basicHeader(credentials)
+      else
+        $log.error("Unknown authorization mechanism: #{ auth.mechanism }")
+
+    unless (conf.params or conf.headers)
+      return $scope.auth.loggedIn = false
+
+    $log.debug("Checking credentials", conf)
+
+    req = $http.get(url, conf)
     req.then ({data}) ->
       $scope.auth.loggedIn = true
       $scope.auth.username = data.user.username # may be null, if anonymous
-    req.error $scope.logOut
+    req.error -> $scope.auth.loggedIn = false
 
 Controllers.controller 'ParameterInputCtrl', ($scope, $q, $timeout, getSuggestions, parameterHistoryKey, Storage) ->
 
@@ -45,7 +81,8 @@ Controllers.controller 'ParameterInputCtrl', ($scope, $q, $timeout, getSuggestio
       d.resolve getHistory()
       return d.promise
 
-Controllers.controller 'EndpointList', ->
+Controllers.controller 'EndpointList', ($scope) ->
+  $scope.showSearch = false
 
 arrayRegexp = /\[\]$/
 bracesRexexp = /^{.*}$/
@@ -84,7 +121,7 @@ getCurrentValue = (ps, name) -> return p.currentValue for p in ps when p.Name is
 
 Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defaults, ParamUtils, Storage, parameterHistoryKey, Markdown) ->
   $scope.params = angular.copy($scope.m.parameters)
-  $scope.show = desc: true
+  $scope.show ?= params: true # Initially set params as the focus.
 
   $scope.description = $scope.m.Description
   if 'markdown' is $scope.m.DescriptionFormat
@@ -138,7 +175,8 @@ Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defau
     m = $scope.m
 
     query =
-      apiKey: $scope.auth.token
+      credentials: $scope.auth.credentials
+      auth: $scope.auth.currentScheme
       httpMethod: m.HTTPMethod
       methodUri: m.URI
       params: {}
@@ -188,12 +226,21 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
   $scope.endpoint = e for e in $scope.endpoints when e.identifier is currentEndpoint
 
   unless $scope.endpoint
-    return $log.warn 'Endpoint not found', currentEndpoint
+    $scope.errors.push
+      msg: 'Endpoint not found ' + currentEndpoint
+      timeout: 3000
+    return $location.path '/'
 
   if $routeParams.method and $routeParams.servicePath
     $scope.currentMethod = m for m in $scope.endpoint.methods when methodMatches m
   else
     $scope.currentMethod = $scope.endpoint.methods[0]
+
+  unless $scope.currentMethod
+    $scope.errors.push
+      msg: "Method not found #{ $routeParams.method } #{ $routeParams.servicePath }"
+      timeout: 3000
+    return $location.path '/'
 
   m.active = false for m in $scope.endpoint.methods
   initMethod $scope.currentMethod
@@ -211,49 +258,7 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
 
 Controllers.controller 'EndpointDetails', EndpointCtrl
 
-c = 0
-
-parseNode = (k, v) ->
-  node = label: k, id: c++, children: []
-  if Array.isArray v
-    node.label += " [#{ v.length }]"
-    for e, i in v
-      node.children.push(parseNode(i, e))
-  else if angular.isObject(v)
-    node.label += " {#{ typeof v }}"
-    for kk, vv of v
-      node.children.push(parseNode(kk, vv))
-  else
-    node.label = "#{ k }: #{ JSON.stringify(v) }"
-  return node
-
-parseDOMElem = (elem) ->
-  textTag = '$$CONTENT$$'
-  node =
-    label: (elem.tagName or textTag)
-    id: c++
-    children: []
-  if elem.attributes?
-    for ai in [0 ... elem.attributes.length]
-      attr = elem.attributes[ai]
-      node.children.push label: """#{ attr.name } = "#{ attr.value }" """, id: c++, children: []
-  if elem.childNodes?
-    for ci in [0 ... elem.childNodes.length]
-      node.children.push(parseDOMElem(elem.childNodes[ci]))
-  if elem.nodeValue?
-    node.children.push label: elem.nodeValue.replace(/(^\s+|\s+$)/g, ''), id: c++, children: []
-  # Prune useless children
-  node.children = (c for c in node.children when c.label and not (c.label is textTag and c.children.length is 0))
-  # Promote text tags to first level kids.
-  node.children = node.children.map (c) -> if c.label is textTag then c.children[0] else c
-  return node
-
-expandTree = (tree, setting) ->
-  for node in tree
-    node.collapsed = setting
-    expandTree node.children, setting
-
-Controllers.controller 'ResponseCtrl', ($scope, $log, xmlParser) ->
+Controllers.controller 'ResponseCtrl', ($q, $timeout, $scope, $log, xmlParser, TreeParsing) ->
 
   $scope.navType = 'pills'
   $scope.showheaders = false
@@ -264,6 +269,7 @@ Controllers.controller 'ResponseCtrl', ($scope, $log, xmlParser) ->
   $scope.tree = expanded: false
 
   ct = $scope.headers['content-type']
+  promises = []
   if $scope.res.response?.length
     if ct.match(/^application\/json/)
       parsed = try
@@ -271,13 +277,18 @@ Controllers.controller 'ResponseCtrl', ($scope, $log, xmlParser) ->
       catch e
         {}
       for k, v of parsed
-        $scope.parsedData.push(parseNode(k, v))
+        promises.push TreeParsing.parseObj k, v
     else if /^text\/xml/.test(ct) or /^application\/xml/.test(ct)
       try
         dom = xmlParser.parse $scope.res.response
-        $scope.parsedData.push(parseDOMElem(dom.documentElement))
+        promises.push TreeParsing.parseDOMElem(dom.documentElement)
       catch e
         $log.error 'Error parsing xml', e
+
+  if promises.length
+    $q.all(promises)
+      .then((parsed) -> TreeParsing.expandTree parsed, not $scope.tree.expanded)
+      .then ((tree) -> $scope.parsedData = tree), $log.error
 
   $scope.isHTML = -> !!ct?.match /^text\/html/
 
@@ -297,4 +308,4 @@ Controllers.controller 'ResponseCtrl', ($scope, $log, xmlParser) ->
     for row in rows
       $scope.flatFile.rows.push(row.split(patt))
 
-  $scope.$watch 'tree.expanded', (nv) -> expandTree $scope.parsedData, !nv
+  $scope.$watch 'tree.expanded', (nv) -> TreeParsing.expandTree $scope.parsedData, !nv
