@@ -195,10 +195,17 @@ Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defau
 
     $log.debug(query)
 
+    dummyRes = {query, response: '', code: 'pending', call: "#{ m.HTTPMethod } #{ m.URI }"}
+
     $http.post('run', query).then ({data}) ->
       data.query = query
+      i = m.results.indexOf dummyRes
+      if i >= 0
+        m.results.splice i, 1
       m.results.push data
-      $scope.show = res: true
+
+    m.results.push dummyRes
+    $scope.show = res: true
 
 EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
 

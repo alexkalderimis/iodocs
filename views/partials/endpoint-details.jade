@@ -74,7 +74,7 @@
                 i.glyphicon(ng-class="{'glyphicon-chevron-down': show.res, 'glyphicon-chevron-right': !show.res}")
                 |  Results
               accordion
-                accordion-group(ng-class="{'panel-success': res.code < 400, 'panel-danger': (res.code >= 400 && res.code < 500), 'panel-warning': res.code > 500}",
+                accordion-group(ng-class="{'panel-info': res.code == 'pending', 'panel-success': res.code < 400, 'panel-danger': (res.code >= 400 && res.code < 500), 'panel-warning': res.code > 500}",
                                 ng-repeat="res in m.results", is-open="{{$last}}")
                   accordion-heading {{$index + 1}}: {{res.query.httpMethod}} {{res.call}} {{res.code}}
 
