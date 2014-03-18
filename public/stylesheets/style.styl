@@ -30,13 +30,24 @@ monospace = "DroidSansMono", "Inconsolata", "Consolas", "monospace"
     top: 0;
     left: 0;
     border-radius: 0;
+    border-bottom-width: 0
     // border-color: rgba(204, 204, 204, 0.8)
     // background-color: rgba(255,255,255,.9);
     z-index: 2000;
 
-    .navbar-nav > .active > a
-        background dark
-        opacity 0.9
+    .navbar-nav > .active
+        border-bottom-width: 2px
+        border-bottom-style: solid
+        border-bottom-color: transparent
+
+        &:hover
+            border-bottom-color: #18bc9c
+        
+        & > a
+            background dark
+            opacity 0.9
+
+
 
 .navbar-custom,
 .navbar-header
@@ -81,7 +92,7 @@ sidebar-width = 20%
 
 #io-footer
     width: sidebar-width
-    height: 75px
+    height: 100px
     fixed bottom left
     background-color dark
     color pale
@@ -195,13 +206,20 @@ form.custom
 
 .method
 
+    & > .auth-info
+        float right
+        .label
+            font-size 14px
+
     .summary
         position relative
 
-        .auth-info
-            absolute bottom left
-            .label
-                font-size 14px
+    .panel.parameters
+        textarea.xml
+            min-height 120px
+        .method-body
+            textarea
+                min-height 200px
 
     background #fff
     padding 2em
@@ -321,3 +339,22 @@ form.custom
     color dark
     background-color pale
     border-color pale
+
+.api-auth
+    .input-group > input.basic
+        width: 50%
+
+.endpoint-list
+    position relative
+    .endpoint-filter
+        fixed top 65px right -1px
+        max-width 20%
+        .input-group-addon
+            width 24px
+
+.errors
+    fixed top 50px
+    width 100%
+
+    .alert
+        opacity 0.9
