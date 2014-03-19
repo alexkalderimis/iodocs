@@ -11,6 +11,18 @@
         "booleanTrueVal": "true",
         "booleanFalseVal": "false"
     },
+    "squirrel": {
+        "name": "Squirrel Mine",
+        "protocol": "http",
+        "baseURL": "localhost:8080",
+        "publicPath": "/squirrelmine/service",
+        "version": "/version",
+        "auth": "key",
+        "intermine": true,
+        "keyParam": "token",
+        "booleanTrueVal": "true",
+        "booleanFalseVal": "false"
+    },
     "flymine": {
         "name": "FlyMine",
         "protocol": "http",
