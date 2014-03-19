@@ -48,11 +48,15 @@ IODirectives.directive 'updateOnBlur', ->
 IODirectives.directive 'resize', ($window, $log) ->
   restrict: 'A'
   link: (scope, elm, attrs, ctrl) ->
-    d = 125
+    d = scope.$eval(attrs.resizeOffset)
+    cutOff = scope.$eval(attrs.resizeCutoff)
     resize = ->
       h = $window.innerHeight
-      $log.debug "Resized to " + (h - d)
-      elm.css height: "#{h - d}px"
+      w = $window.innerWidth
+      if w >= cutOff
+        elm.css height: "#{h - d}px"
+      else
+        elm.css height: null
 
     angular.element($window).on 'resize', -> scope.$apply resize
 
