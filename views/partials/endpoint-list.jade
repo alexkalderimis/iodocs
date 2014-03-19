@@ -1,5 +1,6 @@
+
 .row.endpoint-list
-  .endpoint.card.panel(ng-repeat="endpoint in endpoints | filter:endpointFilter")
+  .endpoint.card.panel.panel-default(ng-repeat="endpoint in endpoints | filter:endpointFilter")
     .panel-heading
       h3
         a(href="#/{{endpoint.identifier}}") {{endpoint.name}}
