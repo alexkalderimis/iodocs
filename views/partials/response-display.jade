@@ -1,57 +1,65 @@
-.response(ng-controller="ResponseCtrl")
+accordion-group.api-response(
+    ng-class="{'panel-info': res.code == 'pending', 'panel-success': res.code < 400, 'panel-danger': (res.code >= 400 && res.code < 500), 'panel-warning': res.code > 500}",
+    ng-repeat="res in m.results",
+    is-open="{{$last}}")
+  accordion-heading
+    button.close(type="button", ng-click="dismiss(res)") ×
+    | {{$index + 1}}: {{res.query.httpMethod}} {{res.call}} {{res.code}}
 
-  .parameters(ng-if="hasParams()")
-    h4(ng-click="showparams = ! showparams")
-      | Request Parameters
-      i.pull-right.glyphicon(ng-class="{'glyphicon-chevron-down': showparams, 'glyphicon-chevron-right': !showparams}")
+  .response(ng-controller="ResponseCtrl")
 
-    table.table.table-condensed(ng-show="showparams")
-      thead
-        tr
-          th Parameter
-          th Value
-      tbody
-        tr(ng-repeat="(param, value) in params")
-          td.param-name {{param}}
-          td.param-value {{value}}
+    .parameters(ng-if="hasParams()")
+      h4(ng-click="showparams = ! showparams")
+        | Request Parameters
+        i.pull-right.glyphicon(ng-class="{'glyphicon-chevron-down': showparams, 'glyphicon-chevron-right': !showparams}")
 
-  .no-params(ng-if="!hasParams()") No parameters.
+      table.table.table-condensed(ng-show="showparams")
+        thead
+          tr
+            th Parameter
+            th Value
+        tbody
+          tr(ng-repeat="(param, value) in params")
+            td.param-name {{param}}
+            td.param-value {{value}}
 
-  .headers
-    h4(ng-click="showheaders = ! showheaders")
-      | Response Headers
-      i.pull-right.glyphicon(ng-class="{'glyphicon-chevron-down': showheaders, 'glyphicon-chevron-right': !showheaders}")
+    .no-params(ng-if="!hasParams()") No parameters.
 
-    table.table.table-condensed(ng-show="showheaders")
-      thead
-        tr
-          th Header
-          th Value
-      tbody
-        tr(ng-repeat="(header, value) in headers")
-          td.header-name {{header}}
-          td.header-value {{value}}
+    .headers
+      h4(ng-click="showheaders = ! showheaders")
+        | Response Headers
+        i.pull-right.glyphicon(ng-class="{'glyphicon-chevron-down': showheaders, 'glyphicon-chevron-right': !showheaders}")
 
-  tabset.responses(type="navType")
-    tab.raw
-      tab-heading Raw
-      .metadata
-        span.label.label-info {{res.headers['content-type']}}
-      pre.response {{res.response}}
-    tab.cooked(ng-if="parsedData.length")
-      tab-heading Browse
-      button.btn.pull-right.btn-primary(type="button", ng-model="tree.expanded", btn-checkbox) Expand
-      .parsed-data(angular-treeview, tree-model="parsedData", tree-id="responsetree")
-    tab.view(ng-if="!parsedData.length")
-      tab-heading View
-      .from-html(ng-if="isHTML()", ng-bind-html="cleanHTML")
-      .from-flat-file(ng-if="flatFile")
-        table.table
-          thead
-            tr
-              th(ng-repeat="header in flatFile.headers track by $index") {{header}}
-          tbody
-            tr(ng-repeat="row in flatFile.rows")
-              // Cells may have repeated values, since they are primitives.
-              td(ng-repeat="cell in row track by $index") {{cell}}
+      table.table.table-condensed(ng-show="showheaders")
+        thead
+          tr
+            th Header
+            th Value
+        tbody
+          tr(ng-repeat="(header, value) in headers")
+            td.header-name {{header}}
+            td.header-value {{value}}
+
+    tabset.responses(type="navType")
+      tab.raw
+        tab-heading Raw
+        .metadata
+          span.label.label-info {{res.headers['content-type']}}
+        pre.response {{res.response}}
+      tab.cooked(ng-if="parsedData.length")
+        tab-heading Browse
+        button.btn.pull-right.btn-primary(type="button", ng-model="tree.expanded", btn-checkbox) Expand
+        .parsed-data(angular-treeview, tree-model="parsedData", tree-id="responsetree")
+      tab.view(ng-if="!parsedData.length")
+        tab-heading View
+        .from-html(ng-if="isHTML()", ng-bind-html="cleanHTML")
+        .from-flat-file(ng-if="flatFile")
+          table.table
+            thead
+              tr
+                th(ng-repeat="header in flatFile.headers track by $index") {{header}}
+            tbody
+              tr(ng-repeat="row in flatFile.rows")
+                // Cells may have repeated values, since they are primitives.
+                td(ng-repeat="cell in row track by $index") {{cell}}
 
