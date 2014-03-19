@@ -2,19 +2,19 @@
   .container-fluid
     .navbar-header
       .row
-        .col-sm-4
+        .col-sm-4.col-lg-4
           span.navbar-brand
             span.muted.hidden-sm.hidden-xs API for
             | &nbsp;
             span.api-name #{apiInfo().name}
 
-        .col-sm-2
+        .col-sm-3.col-lg-2
           ul.nav.navbar-nav
             li.active
               a(href="#")
                 | API version &nbsp;
                 span.badge {{apiInfo.apiVersion}}
-        .col-sm-6.api-auth(ng-controller="AuthCtrl")
+        .col-sm-5.col-lg-6.api-auth(ng-controller="AuthCtrl")
           form.navbar-form.navbar-right
             .form-group
               .input-group
