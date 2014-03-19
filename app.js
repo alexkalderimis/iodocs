@@ -694,8 +694,8 @@ app.post('/custom', function(req, res) {
   }
 });
 
-app.get('/', function (req, res) { res.render('ng-api') });
-app.get('/:api/docs', function (req, res) { res.render('ng-api') });
+app.get('/', function (req, res) { res.render('api') });
+app.get('/:api/docs', function (req, res) { res.render('api') });
 
 app.post('/:api/run', function (req, res, next) {
   (req.body || {}).apiName = req.params.api;

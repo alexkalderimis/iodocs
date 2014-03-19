@@ -1,27 +1,31 @@
 !!! 5
-html
+html(ng-app="iodocs")
     head
-        - if (apiInfo.name)
-            - var title = apiInfo.name + ' API Documentation'
+        - if (apiInfo().name)
+            - var title = apiInfo().name + ' API Documentation'
         -else
             - var title = 'Live Documentation'
         title=title
-        link(rel='stylesheet', href='/bootstrap/docs/assets/css/bootstrap.css')
-        link(rel='stylesheet', href='/bootstrap/docs/assets/css/bootstrap-responsive.css')
+
         link(rel='stylesheet', href='/stylesheets/prettify.css')
-        link(rel='stylesheet', href='stylesheets/style.css')
+        link(rel='stylesheet', href='/stylesheets/angular.treeview.css')
+        link(rel='stylesheet', href='/stylesheets/superhero-bs.css')
+        link(rel='stylesheet', href='/stylesheets/style.css')
 
     body
-        !{body}
-        div(id='io-footer')
-           div(class='f-left') &copy;  
-              a(href='http://mashery.com/io') Mashery, Inc.
-           div(class='f-right') Powered by 
-              a(href='https://github.com/mashery/iodocs') I/O Docs
-        script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js')
-        script(src='/javascripts/json2.js')
-        script(src='/javascripts/jquery.autocomplete.min.js')
-        script(src='/javascripts/prettify.js')
-        script(src='/javascripts/utilities.js')
-        script(src='/javascripts/livedocs.js')
-        script(src='/javascripts/docs.js')
+        block content
+
+        #io-footer
+          span.credit
+            | &copy; &nbsp;
+            a(href='http://mashery.com/io') Mashery, Inc.
+            | &nbsp; and &nbsp;
+            a(href='http://www.intermine.org') InterMine
+          .tech
+            | Powered by 
+            a(href='https://github.com/alexkalderimis/iodocs') I/O Docs
+
+        script(src='/javascripts/vendor/json2.js')
+        
+        block scripts
+

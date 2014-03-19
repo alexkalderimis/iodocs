@@ -1,13 +1,35 @@
-// views/api
+// views/ng-api
 
-- var authed = (session.authed && apiInfo.oauth && apiInfo.oauth.type == 'three-legged') ? 'authed' : ''
+extends layout
 
-include api/header
+block content
 
-div.main.container-fluid
+  include header
 
-  ul
-    each endpoint in apiDefinition.endpoints
-      include endpoint
+  .main.container-fluid
+    .row(ng-view)
 
-// end views/api
+  .container-fluid.errors
+    .row
+      .col-sm-10.col-sm-offset-1(ng-repeat="error in errors", ng-controller="ErrorCtrl")
+        .alert.alert-dismissable.alert-warning
+          button.close(type="button", ng-click="dismiss()") ×
+          h4 Error
+          p {{error.msg}}
+
+block scripts
+  script(src='/javascripts/vendor/angular.min.js')
+  script(src='/javascripts/vendor/angular-route.min.js')
+  script(src='/javascripts/vendor/angular-sanitize.min.js')
+  script(src="/javascripts/vendor/angular-xml.min.js")
+  script(src='/javascripts/vendor/ui-bootstrap-tpls-0.10.0.js')
+  script(src='/javascripts/vendor/angular.treeview.js')
+  script(src='/javascripts/vendor/prettify.js')
+  script(src='/javascripts/vendor/markdown.js')
+  script(src='/javascripts/base64.js')
+  script(src='/javascripts/services.js')
+  script(src='/javascripts/controllers.js')
+  script(src='/javascripts/directives.js')
+  script(src='/javascripts/app.js')
+
+// end views/ng-api
