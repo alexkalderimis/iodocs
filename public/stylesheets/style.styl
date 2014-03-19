@@ -1,13 +1,9 @@
-@import url("/fonts/sintony.css")
-@import url("/fonts/roboto.css")
-@import url("/fonts/roboto-condensed.css")
+@import "superhero"
 
 @font-face
     font-family DroidSansMono
     src local("Droid Sans Mono"), url(/fonts/droidsansmono.css)
 
-pale = rgb(241, 242, 246)
-dark = #2c3e50
 monospace = "DroidSansMono", "Inconsolata", "Consolas", "monospace"
 
 .nav,
@@ -19,7 +15,6 @@ monospace = "DroidSansMono", "Inconsolata", "Consolas", "monospace"
 .since
     absolute top 2em right 3em
     font-size 0.8em
-    color dark
 
 .responses
     .metadata
@@ -41,13 +36,11 @@ monospace = "DroidSansMono", "Inconsolata", "Consolas", "monospace"
         border-bottom-color: transparent
 
         &:hover
-            border-bottom-color: #18bc9c
+            border-bottom-color: link-color
         
         & > a
-            background dark
+            // background dark
             opacity 0.9
-
-
 
 .navbar-custom,
 .navbar-header
@@ -72,16 +65,12 @@ body,
 select,
 input,
 textarea
-    color #444
-    font-family Roboto, 'Helvetica Neue', Helvetica, Arial, Tahoma, sans-serif
     font-weight normal
 
 body
-    background pale
     padding-top 50px
 
 .navbar-header
-    font-family Sintony, Roboto, 'Helvetica Neue', Helvetica, Arial, Tahoma, sans-serif
     font-weight 400
 
     .navbar-brand
@@ -90,21 +79,37 @@ body
 
 sidebar-width = 20%
 
+.endpoint-list
+    .endpoint-filter
+        .filter
+            border 1px solid link-color
+            &:hover
+                border-color lighten(link-color, 20%)
+
 #io-footer
-    width: sidebar-width
-    height: 100px
     fixed bottom left
-    background-color dark
-    color pale
+    color text-color
+    background-color body-bg
     padding 1em
+
+    height: 50px
+    width: 100%
+    z-index: 10
+
+    .tech
+        absolute top 1em right 1em
 
 .sidebar
     fixed top 50px left
     width sidebar-width
     box-sizing border-box
-    background dark
     padding-right 0
     padding-top 15px
+
+    @media screen and (max-width: 750px)
+        relative top 90px left 0
+        padding 1em 1em 0 1em
+        width: 100%
 
     .filter
         padding-left 0.5em
@@ -117,17 +122,8 @@ sidebar-width = 20%
         max-height 150px
 
         li > a
-            color #fff
             padding 5px 15px
             border-radius 0
-
-            &:hover
-                color dark
-                background darken(pale, 10%)
-
-        .active > a
-            color dark
-            background pale
 
         @media screen and (min-width: 800px)
             max-height 88%
@@ -152,10 +148,8 @@ centered(n)
     margin: 2em 0 0 2em
 
     .panel-heading
-        h3
-            border-bottom-width 1x
-            border-bottom-style solid
-            border-bottom-color pale
+        background-color jumbotron-bg
+
 
 .endpoint.card
     height: 280px
@@ -165,6 +159,10 @@ centered(n)
     box-sizing border-box
     left sidebar-width
     width 100% - sidebar-width
+
+    @media screen and (max-width: 750px)
+        absolute top 360px left 0
+        width: 100%
 
     padding-left 0
     padding-right 0
@@ -221,7 +219,6 @@ form.custom
             textarea
                 min-height 200px
 
-    background #fff
     padding 2em
 
     .summary .description
@@ -254,8 +251,13 @@ form.custom
             font-family monospace
             font-size 0.9em
 
+    .panel.api-response
+        box-shadow 0 0 2px darken(body-bg, 15%)
+
 .method .description,
 .from-html
+    code
+        font-size 75%
     table
         width 100%
         border-collapse collapse
@@ -266,7 +268,6 @@ form.custom
             padding 0.2em 1em
 
         tbody > tr > td
-            border-top 1px solid rgb(221, 221, 221)
             font-family monospace
             font-size 0.9em
 
@@ -334,11 +335,6 @@ form.custom
 
         a
             color #ffffff
-
-.btn-default
-    color dark
-    background-color pale
-    border-color pale
 
 .api-auth
     .input-group > input.basic
