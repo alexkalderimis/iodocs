@@ -178,6 +178,11 @@ Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defau
       hist.push toStore
       Storage.put key, JSON.stringify(hist)
 
+  $scope.dismiss = (res) ->
+    results = $scope.m.results or []
+    i = results.indexOf res
+    results.splice(i, 1) if i >= 0
+
   $scope.run = ->
     m = $scope.m
 
