@@ -1,5 +1,5 @@
 .row.endpoint-view
-  .sidebar(resize, ng-controller="SidebarCtrl")
+  .sidebar(resize, resize-offset="50", resize-cutoff="750", ng-controller="SidebarCtrl")
 
     .input-group.filter
       span.input-group-addon
@@ -8,11 +8,11 @@
       span.input-group-btn
         button.btn.btn-default(ng-click="endpointFilter = null") Clear
 
-    ul.nav.nav-pills.nav-stacked.endpoints
-      li(ng-repeat="e in endpoints | filter:endpointFilter",
+    .list-group.endpoints
+      a.list-group-item(href="#/{{e.identifier}}",
+        ng-repeat="e in endpoints | filter:endpointFilter",
         scroll-if="e === endpoint",
-        ng-class="{active: e === endpoint}")
-        a(href="#/{{e.identifier}}") {{e.name}}
+        ng-class="{active: e === endpoint}") {{e.name}}
 
   .endpoint
 
@@ -74,10 +74,6 @@
                 i.glyphicon(ng-class="{'glyphicon-chevron-down': show.res, 'glyphicon-chevron-right': !show.res}")
                 |  Results
               accordion
-                accordion-group(ng-class="{'panel-info': res.code == 'pending', 'panel-success': res.code < 400, 'panel-danger': (res.code >= 400 && res.code < 500), 'panel-warning': res.code > 500}",
-                                ng-repeat="res in m.results", is-open="{{$last}}")
-                  accordion-heading {{$index + 1}}: {{res.query.httpMethod}} {{res.call}} {{res.code}}
-
                   include response-display
 
               .no-results(ng-if="!m.results.length")
