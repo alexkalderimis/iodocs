@@ -71,7 +71,7 @@ var logger = new winston.Logger({
   transports: [
     new winston.transports.Console({
       colorize: true,
-      level: 'debug'
+      level: 'info'
     }),
     new winston.transports.File({
       filename: "iodocs.log",
@@ -178,8 +178,8 @@ function initAppConfig () {
 // Init config now.
 initAppConfig();
 
-// Refresh config every five minutes.
-setInterval(initAppConfig, 5 * 60 * 1000);
+// Refresh config every configured interval, or every hour.
+setInterval(initAppConfig, (config.refreshInterval || 60 * 60) * 1000);
 
 var app = module.exports = express(); 
 
