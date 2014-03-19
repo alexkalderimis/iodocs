@@ -7,7 +7,7 @@
   .col-sm-10
     .input-group
       parameter-input(param = "parameter")
-      .input-group-addon
+      .input-group-addon(popover-placement="left", popover-trigger="mouseenter", popover="{{switchDesc}}")
         input.is-active(ng-disabled="!switchable", type="checkbox", ng-model="parameter.active")
       
     .caption

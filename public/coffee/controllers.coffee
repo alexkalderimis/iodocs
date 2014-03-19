@@ -96,9 +96,13 @@ Controllers.controller 'ParameterCtrl', ($scope, getDefaultValue) ->
   $scope.removable = $scope.repeatable and (sib for sib in $scope.params when sib.Name is p.Name).length > 1
   $scope.type = p.Type?.replace(arrayRegexp, '')
   p.required = p.Required is 'Y'
-  p.active ?= p.required
-  $scope.switchable = not $scope.parameter.active
+  p.active ?= (p.Recommended or p.required)
+  $scope.switchable = not p.required
   $scope.variableName = /\?/.test p.Name
+
+  $scope.switchDesc = "This parameter is #{ if p.required then 'required' else 'optional' }"
+  if p.Recommended
+    $scope.switchDesc += ", but it is recommended."
 
   $scope.change = ->
     p.active = true
