@@ -127,16 +127,20 @@ db.on("error", logger.error.bind(logger, '[REDIS] %s'));
 //
 // Load API Configs
 //
-var apisConfig;
+var apisConfig = {};
 var imAPIs = {};
 
 function initAppConfig () {
 
   fs.readFile('public/data/apiconfig.json', 'utf-8', function(err, data) {
-    var apiName;
+    var apiName, parsed, slug;
     if (err) throw err;
 
-    apisConfig = JSON.parse(data);
+    parsed = JSON.parse(data);
+    for (slug in parsed) {
+      apisConfig[slug] = parsed[slug];
+    }
+
     logger.debug('API CONFIG: %j', apisConfig)
 
     for (apiName in apisConfig) {
@@ -232,6 +236,7 @@ app.configure(function() {
       return (apisConfig[req.params.api] || {});
     };
     res.locals.apis = apisConfig;
+    res.locals.config = config;
     next();
   });
   app.use(app.router);
@@ -668,6 +673,9 @@ app.post('/custom', function(req, res) {
   var api = req.body;
   var name = api.name;
   var slug = api.slug;
+  if (apisConfig[slug]) {
+    return res.render('custom', {error: 'There is already a service with that identifier'})
+  }
   api.publicPath = '/' + api.publicPath + '/service';
   var uri = api.protocol + "://" + api.baseURL + api.publicPath;
   logger.debug("Fetching service listing from " + uri);
@@ -680,11 +688,11 @@ app.post('/custom', function(req, res) {
           try {
               imAPIs[slug] = JSON.parse(buff);
           } catch (e) {
-              var msg = "Error parsing service listing for " + name + "(" + buff + "): " + e;
+              var msg = "Error parsing service listing for " + slug;
               return handleError(msg);
           }
           apisConfig[slug] = api;
-          res.redirect('/' + slug);
+          res.redirect('/' + slug + '/docs');
       });
   });
   fetching.on('error', handleError);

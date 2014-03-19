@@ -2,8 +2,6 @@
 
 extends layout
 
-h1='Add an API'
-
 block content
 
   .navbar.navbar-custom.navbar-default.navbar-fixed-top(role="navigation")
@@ -19,48 +17,69 @@ block content
                   i.glyphicon.glyphicon-th-large
                   |  See all
 
-  div.constainer-fluid
+  div.container
 
     if error
       .alert.alert-danger
         p #{ error }
+    .alert.alert-danger(ng-repeat="err in errors")
+      p {{ err.msg }}
 
-  form.form-horizontal.custom(method='POST')
+  .container
+    p
+      | You can submit the details of an API here, making its documentation
+      | available to browse on this site. This makes the API documentation
+      | publically available, so do be careful if you are not ready to release
+      | to the public. Please note that your service must be accessible to the
+      | the world in general (or specifically the machine hosting these docs),
+      | since every API call needs to make a round trip to that server. Also, this
+      | submission is only temporary and will disappear on the next restart. If you
+      | would like your documentation to appear here permanently, please get
+      | in touch with us at &nbsp;
+      a(href="mailto:" + config.maintainerEmail)= config.maintainerEmail
 
-    .form-group
-      label.col-sm-2.control-label(for='slug')
-        span Name
-      .col-sm-10
-        input.form-control(required="true", type='text', name='slug')
-    .form-group
-      label.col-sm-2.control-label(for='name')
-        span Description
-      .col-sm-10
-        input.form-control(type='text', name='name')
-    .form-group
-      label.col-sm-2.control-label
-        span URI
-      .col-sm-10
-        .input-group
-          span.input-group-addon http://
-          input.span3.form-control(required="true", type='text', name='baseURL')
-          span.input-group-addon /
-          input.span3.form-control(required="false", type='text', name='publicPath')
-          span.input-group-addon /service
+  .container(ng-controller="CustomApiCtrl")
+    form.form-horizontal.custom(method='POST', action="custom", name="customform")
 
-    input(type='hidden', name='protocol', value='http')
-    input(type='hidden', name='version', value='/version')
-    input(type='hidden', name='auth', value='key')
-    input(type='hidden', name='intermine', value='true')
-    input(type='hidden', name='keyParam', value='token')
-    input(type='hidden', name='booleanTrueVal', value='true')
-    input(type='hidden', name='booleanFalseVal', value='false')
+      .form-group
+        label.col-sm-2.control-label(for='slug')
+          span Identifier
+        .col-sm-10
+          input.form-control(
+            placeholder="A short identifier, no spaces",
+            ng-model="slug", ng-pattern="pathPart", required="true", type='text', name='slug')
+      .form-group
+        label.col-sm-2.control-label(for='name')
+          span Name
+        .col-sm-10
+          input.form-control(
+            placeholder = "A more human readable name",
+            ng-model="name", type='text', name='name')
+      .form-group
+        label.col-sm-2.control-label
+          span URI
+        .col-sm-10
+          .input-group
+            span.input-group-addon http://
+            input.span3.form-control(ng-model="baseURL", ng-pattern="hostname", placeholder="host name", required="true", type='text', name='baseURL')
+            span.input-group-addon /
+            input.span3.form-control(ng-model="publicPath", placeholder="optional path", type='text', name='publicPath')
+            span.input-group-addon /service
 
-    button.btn.btn-large.btn-primary(type='submit', value='add')
-      i.glyphicon.glyphicon-floppy-disk 
-      |  Add
+      input(type='hidden', name='protocol', value='http')
+      input(type='hidden', name='version', value='/version')
+      input(type='hidden', name='auth', value='key')
+      input(type='hidden', name='intermine', value='true')
+      input(type='hidden', name='keyParam', value='token')
+      input(type='hidden', name='booleanTrueVal', value='true')
+      input(type='hidden', name='booleanFalseVal', value='false')
+
+      button.btn.btn-large.btn-primary(type='submit', value='add')
+        i.glyphicon.glyphicon-floppy-disk 
+        |  Add
 
 block scripts
   script(src='/javascripts/vendor/angular.min.js')
+  script(src='/javascripts/custom-api.js')
 
 // end views/custom

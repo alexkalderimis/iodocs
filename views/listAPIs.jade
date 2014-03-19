@@ -19,7 +19,7 @@ block content
         .panel.card.panel
           .panel-heading
             h3
-              a(href= '/' + api + '/docs') #{apis[api].name}
+              a(href= '/' + api + '/docs') #{apis[api].name || api}
           .panel-body
             p
               = apis[api].baseURL
