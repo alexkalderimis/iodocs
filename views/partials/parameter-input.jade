@@ -1,8 +1,27 @@
 ng-switch(on="parameter.Type")
-  textarea.form-control.xml(ng-change="change()", ng-model="parameter.currentValue", ng-switch-when="XML")
-  input.form-control(ng-change="change()", ng-model="parameter.currentValue", ng-switch-when="Integer", numeric, type="number")
-  button.btn.btn-default.boolean(ng-change="change()", ng-model="parameter.currentValue", ng-switch-when="boolean", btn-checkbox)
+  textarea.form-control.xml(
+    ng-change="change()",
+    ng-model="parameter.currentValue",
+    ng-switch-when="XML")
+  input.form-control(
+    ng-change="change()",
+    ng-model="parameter.currentValue",
+    ng-switch-when="Integer",
+    numeric,
+    type="number")
+  button.btn.btn-info.boolean(
+    ng-change="change()",
+    ng-model="parameter.currentValue",
+    ng-switch-when="boolean", btn-checkbox)
     | {{parameter.currentValue || false }}
-  select.form-control(ng-change="change()", ng-model="parameter.currentValue", ng-switch-when="enumerated")
+  select.form-control(
+    ng-change="change()",
+    ng-model="parameter.currentValue",
+    ng-switch-when="enumerated")
     option(ng-repeat="o in parameter.EnumeratedList") {{o}}
-  input.form-control(type="text", ng-required="{{parameter.required}}", update-on-blur, typeahead="s for s in getSuggestions()", ng-change="change()", ng-model="parameter.currentValue", ng-switch-default)
+  input.form-control(type="text",
+    ng-switch-default,
+    ng-model="parameter.currentValue",
+    ng-required="{{parameter.required}}",
+    typeahead="s for s in suggest($viewValue) | filter:$viewValue | limitTo:10",
+    ng-change="change()")

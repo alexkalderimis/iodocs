@@ -10,44 +10,20 @@ Controllers.controller 'ErrorCtrl', ($log, $timeout, $scope) ->
 
   $timeout $scope.dismiss, $scope.error.timeout
 
-Controllers.controller 'AuthCtrl', ($scope, $http, $log, Base64) ->
+Controllers.controller 'AuthCtrl', ($scope, $http, $log, RequestAuth) ->
   authWatcher   = (s) -> JSON.stringify [s.auth.currentScheme, s.auth.credentials, s.apiInfo.baseURL]
   $scope.logOut = ->
     $scope.auth.loggedIn = false
     $scope.auth.credentials = {}
-  basicHeader = ({username, password}) ->
-    encoded = Base64.encode "#{ username }:#{ password }"
-    "Basic #{ encoded }"
 
   $scope.$watch authWatcher, ->
-    auth = $scope.auth.currentScheme
-    credentials = $scope.auth.credentials
     {protocol, baseURL, publicPath} = $scope.apiInfo
-
-    return unless (auth and credentials and baseURL)
-    $log.info credentials
-
+    conf = RequestAuth.auth $scope
+    return unless conf and baseURL
     url = "#{ protocol }://#{ baseURL }#{ publicPath }/user/whoami"
-    conf = {}
-    switch auth.mechanism
-      when 'parameter'
-        if credentials.token
-          conf.params = {}
-          conf.params[auth.key] = credentials.token
-      when 'header'
-        if credentials.token
-          conf.headers = {}
-          conf.headers[auth.key] = auth.prefix + credentials.token
-      when 'basic'
-        if credentials.username and credentials.password
-          conf.headers = Authorization: basicHeader(credentials)
-      else
-        $log.error("Unknown authorization mechanism: #{ auth.mechanism }")
 
     unless (conf.params or conf.headers)
       return $scope.auth.loggedIn = false
-
-    $log.debug("Checking credentials", conf)
 
     req = $http.get(url, conf)
     req.then ({data}) ->
@@ -55,11 +31,9 @@ Controllers.controller 'AuthCtrl', ($scope, $http, $log, Base64) ->
       $scope.auth.username = data.user.username # may be null, if anonymous
     req.error -> $scope.auth.loggedIn = false
 
-Controllers.controller 'ParameterInputCtrl', ($scope, $q, $timeout, getSuggestions, parameterHistoryKey, Storage) ->
+Controllers.controller 'ParameterInputCtrl', ($scope, $q, $log, $timeout, Suggestions, parameterHistoryKey, Storage) ->
 
-  getStorageKey = ->
-    pidx = $scope.params.indexOf $scope.parameter
-    parameterHistoryKey $scope, $scope.parameter.Name, pidx
+  getStorageKey = -> parameterHistoryKey $scope, $scope.parameter.Name
 
   storeHistory = (hist) -> Storage.put getStorageKey(), JSON.stringify(hist)
 
@@ -73,9 +47,9 @@ Controllers.controller 'ParameterInputCtrl', ($scope, $q, $timeout, getSuggestio
     else
       []
 
-  $scope.getSuggestions = ->
+  $scope.suggest = (vv) ->
     if $scope.parameter.Options
-      return getSuggestions $scope.params, $scope.parameter
+      return Suggestions.getSuggestions $scope.params, $scope.parameter
     else
       d = $q.defer()
       d.resolve getHistory()
@@ -87,7 +61,7 @@ Controllers.controller 'EndpointList', ($scope) ->
 arrayRegexp = /\[\]$/
 bracesRexexp = /^{.*}$/
 
-Controllers.controller 'ParameterCtrl', ($scope, getDefaultValue) ->
+Controllers.controller 'ParameterCtrl', ($scope, $log, Suggestions, Counter) ->
   p = $scope.parameter
   p.currentValue ?= p.Default unless p.changed
   p.currentName = p.Name
@@ -110,21 +84,33 @@ Controllers.controller 'ParameterCtrl', ($scope, getDefaultValue) ->
 
   $scope.removeParam = ->
     i = $scope.params.indexOf p
-    $scope.params.splice(i, 1)
+    if i >= 0
+      $scope.params.splice(i, 1)
+    else $log.warn "Cannot remove param not in list", p
+
   $scope.addParam = ->
     newParam = angular.copy(p)
     delete newParam.active
+    newParam.id = p.Name + '_' + Counter.next p.Name
     i = $scope.params.indexOf p
     $scope.params.splice(i + 1, 0, newParam)
 
-  $scope.$watch 'auth.token', (t) ->
-    if p.currentValue is p.Default
-      getDefaultValue($scope.params, p).then (v) -> p.currentValue = v
+  $scope.$watch 'auth.loggedIn', (t) ->
+    setCurrentValue = (v) -> p.currentValue = v
+    unless p.changed
+      Suggestions.getDefaultValue($scope.params, p).then setCurrentValue
 
 getCurrentValue = (ps, name) -> return p.currentValue for p in ps when p.Name is name
 
-Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defaults, ParamUtils, Storage, parameterHistoryKey, Markdown) ->
+
+Controllers.controller 'MethodCtrl', ($scope, $q, $log, $http, Suggestions, Defaults, ParamUtils, Storage, parameterHistoryKey, Counter, Markdown) ->
   $scope.params = angular.copy($scope.m.parameters)
+
+  do initParams = ->
+    for p, i in $scope.params
+      p.initialIdx ?= i
+      p.id ?= p.Name + '_' + Counter.next p.Name
+    
   $scope.show ?= params: true # Initially set params as the focus.
 
   if $scope.show.params and not ($scope.params?.length or $scope.m.body?.length)
@@ -144,29 +130,40 @@ Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defau
   for name, _ of allDeps then do (name) ->
     $scope.$watch ((s) -> getCurrentValue s.params, name), (nv, ov) ->
       return if nv is ov
-      oldParams = $scope.params
-      $scope.params = angular.copy($scope.m.parameters)
-      for pp in $scope.params
-        oldValue = getCurrentValue oldParams, pp.Name
-        pp.currentValue = oldValue if oldValue?
-      expandNumberedParams $scope.params
+      # Remove previously inserted values.
+      $scope.params = (p for p in $scope.params when not p.Repeat)
+      # Get the templateable parameters
+      repeatableParams = (angular.copy p for p in $scope.m.parameters when p.Repeat)
+
+      # It would be nice to get them back in position. Not sure if that is even possible.
+      $scope.params.push(rp) for rp in repeatableParams
+      initParams()
+      expandNumberedParams($scope.params).then (expanded) -> $scope.params = expanded
 
   expandNumberedParams = (parameters) ->
-    parameters.filter((p) -> p.Repeat).forEach (repeatedP) ->
+    parameters = parameters.slice()
+    getReps = (p) -> Suggestions.getRepetitions parameters, p
+    withRepeats = parameters.filter (p) -> p.Repeat
+    working = withRepeats.map (repeatedP) -> getReps(repeatedP).then (things) ->
+      i = foundAt = parameters.indexOf repeatedP # Might have changed, need to get it late.
+      defaultParser = new Defaults.DefaultParser repeatedP.Default
+      parameters.splice(i, 1) # Remove the template
+      for thing, thingIdx in things
+        newP = angular.copy(repeatedP)
+        newName = newP.Name.replace(nRegex, String(thingIdx + 1))
+        newP.Name = newP.currentName = newName
+        newP.Type = newP.Type.replace(/\[\]$/, '')
+        newP.id = "#{ newName }_#{ Counter.next newName }"
+        newP.currentValue = defaultParser.parse thing
+        newP.changed = newP.active = true
+        parameters.splice(i++, 0, newP) # Insert newP where old P was, advancing the cursor.
 
-      getRepetitions(parameters, repeatedP).then (things) ->
-        i = parameters.indexOf repeatedP # Might have changed, need to get it late.
-        defaultParser = new Defaults.DefaultParser repeatedP.Default
-        parameters.splice(i, 1) # Remove the template
-        for thing, thingIdx in things
-          newP = angular.copy(repeatedP)
-          newName = newP.Name.replace(nRegex, String(thingIdx + 1))
-          newP.Name = p.currentName = newName
-          newP.currentValue = defaultParser.parse thing
-          newP.changed = newP.active = true
-          parameters.splice(i++, 0, newP) # Insert newP where old P was, advancing the cursor.
+    if working.length
+      $q.when parameters
+    else
+      $q.all(working).then -> parameters
     
-  expandNumberedParams $scope.params
+  expandNumberedParams($scope.params).then (expanded) -> $scope.params = expanded
 
   saveParamValueToHistory = (p) ->
     return unless p.currentValue?
@@ -202,11 +199,12 @@ Controllers.controller 'MethodCtrl', ($scope, $log, $http, getRepetitions, Defau
         Format: m.bodyContentType
         Content: m.content
 
-    $log.debug(query)
+    $log.debug('Running', query)
 
     dummyRes = {query, call: m.URI, response: '', headers: [], code: 'pending'}
 
     $http.post('run', query).then ({data}) ->
+      $scope.$emit 'update' if m.HTTPMethod isnt 'GET'
       data.query = query
       i = m.results.indexOf dummyRes
       if i >= 0
@@ -223,10 +221,8 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
     return unless $scope.currentMethod?
     {HTTPMethod, URI} = $scope.currentMethod
     newLoc = "/#{ $scope.endpoint.identifier }/#{ HTTPMethod }#{ URI or '/' }"
-    $log.debug newLoc
+    $log.debug 'Replacing path with', newLoc
     $location.replace().path newLoc
-
-  $log.debug $routeParams
 
   # Slightly (read very) hacky workaround of the fact that the URI
   # could be the empty string. 
@@ -267,7 +263,7 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
   m.active = false for m in $scope.endpoint.methods
   initMethod $scope.currentMethod
 
-  $log.debug $scope.currentMethod
+  $log.debug 'CURRENT METHOD', $scope.currentMethod
 
   updateLocation()
 
@@ -307,10 +303,14 @@ Controllers.controller 'ResponseCtrl', ($q, $timeout, $scope, $log, xmlParser, T
       catch e
         $log.error 'Error parsing xml', e
 
+  setTree = (tree) ->
+    $scope.parsedData = tree
+    $log.debug "Next id = #{ TreeParsing.nextId() }"
+
   if promises.length
     $q.all(promises)
       .then((parsed) -> TreeParsing.expandTree parsed, not $scope.tree.expanded)
-      .then ((tree) -> $scope.parsedData = tree), $log.error
+      .then setTree, $log.error
 
   $scope.isHTML = -> !!ct?.match /^text\/html/
 

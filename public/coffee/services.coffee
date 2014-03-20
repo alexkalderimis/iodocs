@@ -52,72 +52,95 @@ class DefaultParser extends OptionParser
 
 Services.factory 'Defaults', -> {DefaultParser, OptionParser}
 
-Services.factory 'getDefaultValue', ($http, $q, $rootScope, ParamUtils) -> (params, param) ->
-  unless defaultBindingRE.test(param.Default) and param.Options
-    d = $q.defer()
-    d.reject('not a dynamic parameter')
-    return d.promise
+Services.factory 'RequestAuth', ($log, Base64) ->
 
-  bindings = {}
-  for name in ParamUtils.getDependencies(param.Options)
-    bindings[name] = ParamUtils.getCurrentValue params, name
+  basicHeader = ({username, password}) ->
+    encoded = Base64.encode "#{ username }:#{ password }"
+    "Basic #{ encoded }"
 
-  command = param.Options
-  [path, parseParts] = command.split '|'
-  optionParser = new OptionParser parseParts, bindings
-  defaultParser = new DefaultParser param.Default
-  url = getUrl $rootScope, path
-  params = getParams $rootScope
-  $http.get(url, {params, cache: true})
-       .then(optionParser.parse)
-       .then(getFirst)
-       .then(defaultParser.parse)
+  return auth: ($scope) ->
+    auth = $scope.auth.currentScheme
+    credentials = $scope.auth.credentials
 
-getUrl = (scope, path) ->
-  {protocol, baseURL, publicPath} = scope.apiInfo
-  url = "#{ protocol }://#{ baseURL }#{ publicPath }#{ path }"
+    return unless (auth and credentials)
 
-getParams = (scope) ->
-  params = {}
-  params.format = 'json'
-  params.token = scope.auth.token
-  return params
+    conf = {}
+    switch auth.mechanism
+      when 'parameter'
+        if credentials.token
+          conf.params = {}
+          conf.params[auth.key] = credentials.token
+      when 'header'
+        if credentials.token
+          conf.headers = {}
+          conf.headers[auth.key] = auth.prefix + credentials.token
+      when 'basic'
+        if credentials.username and credentials.password
+          conf.headers = Authorization: basicHeader(credentials)
+      else
+        $log.error("Unknown authorization mechanism: #{ auth.mechanism }")
 
-Services.factory 'getSuggestions', ($http, $rootScope, ParamUtils) -> (params, param) ->
-  bindings = {}
-  for name in ParamUtils.getDependencies(param.Options)
-    bindings[name] = ParamUtils.getCurrentValue params, name
+    return conf
 
-  command = param.Options
-  [path, parseStr] = command.split '|'
-  optionParser = new OptionParser parseStr, bindings
-  defaultParser = new DefaultParser param.Default
-  url = getUrl $rootScope, path
-  params = getParams $rootScope
+Services.factory 'Suggestions', ($http, $q, $log, $cacheFactory, $rootScope, ParamUtils, RequestAuth) ->
+  cache = $cacheFactory 'suggestion-cache'
 
-  $http.get(url, {params, cache: true})
-       .then(optionParser.parse)
-       .then(ensureArray)
-       .then (options) -> options.map defaultParser.parse
+  getUrl = (scope, path) ->
+    {protocol, baseURL, publicPath} = scope.apiInfo
+    url = "#{ protocol }://#{ baseURL }#{ publicPath }#{ path }"
+
+  getOpts = RequestAuth.auth
+
+  flushCache = -> cache.removeAll()
+  $rootScope.$watch 'auth.loggedIn', flushCache
+  $rootScope.$on 'update', flushCache
+
+  notDynamic = $q.defer()
+  notDynamic.reject 'not dynamic'
+
+  isDynamic = (param) -> param.Default?.match(defaultBindingRE) and param.Options
+
+  getRepetitions = (params, param) ->
+    bindings = {}
+    for name in ParamUtils.getDependencies(param.Repeat)
+      bindings[name] = ParamUtils.getCurrentValue params, name
+
+    command = param.Repeat
+    [path, parseStr] = command.split('|')
+    optionParser = new OptionParser parseStr, bindings
+    url = getUrl $rootScope, path
+    opts = getOpts $rootScope
+    $http.get(url, opts)
+        .then(optionParser.parse)
+        .then(ensureArray)
+
+  getSuggestions = (params, param) ->
+    return notDynamic.promise unless isDynamic param
+    bindings = {}
+    command = param.Options
+    for name in ParamUtils.getDependencies command
+      bindings[name] = ParamUtils.getCurrentValue params, name
+    key = command + JSON.stringify(bindings)
+
+    cache.get(key) or cache.put key, do ->
+      [path, parseStr] = command.split '|'
+      optionParser = new OptionParser parseStr, bindings
+      defaultParser = new DefaultParser param.Default
+      url = getUrl $rootScope, path
+      opts = getOpts $rootScope
+
+      $http.get(url, opts)
+          .then(optionParser.parse)
+          .then(ensureArray)
+          .then (options) -> options.map defaultParser.parse
+
+  getDefaultValue = (params, param) -> getSuggestions(params, param).then getFirst
+
+  {getRepetitions, getDefaultValue, getSuggestions}
 
 Services.factory 'ParamUtils', ->
   getDependencies: (s) -> (g.substring 1 for g in (s.match(/(\$[^\.]+)/g) ? []))
   getCurrentValue: (ps, name) -> return p.currentValue for p in ps when p.Name is name
-
-Services.factory 'getRepetitions', ($http, $rootScope, ParamUtils) -> (params, param) ->
-
-  bindings = {}
-  for name in ParamUtils.getDependencies(param.Repeat)
-    bindings[name] = ParamUtils.getCurrentValue params, name
-
-  command = param.Repeat
-  [path, parseStr] = command.split('|')
-  optionParser = new OptionParser parseStr, bindings
-  url = getUrl $rootScope, path
-  params = getParams $rootScope
-  $http.get(url, {params, cache: true})
-       .then(optionParser.parse)
-       .then(ensureArray)
 
 Services.factory 'Storage', ($rootScope, $window) ->
   put: (key, val) -> $window.localStorage?.setItem(key, val)
@@ -194,6 +217,8 @@ Services.factory 'TreeParsing', ($q, $timeout) ->
 
     return def.promise
 
+  str = JSON.stringify
+
   parseObj = (k, v) ->
     def = $q.defer()
     $timeout ->
@@ -205,7 +230,11 @@ Services.factory 'TreeParsing', ($q, $timeout) ->
         for e, i in v
           childPromises.push parseObj(i, e)
       else if angular.isObject(v)
-        node.label += " {#{ typeof v }}"
+        valkeys = Object.keys(v).filter (ok) -> not angular.isObject v[ok]
+        desc = ''
+        if valkeys.length <= 4
+          desc = ' {' + ("#{vk}: #{str v[vk]}" for vk in valkeys).join(' ') + '}'
+        node.label += ": Object" + desc
         for kk, vv of v
           childPromises.push parseObj(kk, vv)
       else
@@ -215,9 +244,8 @@ Services.factory 'TreeParsing', ($q, $timeout) ->
         # Need to wait for kids.
         $q.all(childPromises).then (kids) ->
           node.children = kids
-          def.resolve node
-      else
-        def.resolve node
+
+      def.resolve node
 
     def.promise
 
@@ -237,4 +265,20 @@ Services.factory 'TreeParsing', ($q, $timeout) ->
 
     return def.promise
 
-  return {expandTree, parseObj, parseDOMElem}
+  nextId = -> c
+
+  return {expandTree, parseObj, parseDOMElem, nextId}
+
+Services.factory 'Counter', ->
+  class Counter
+
+    constructor: ->
+      @counts = {}
+
+    next: (key) ->
+      if key of @counts
+        ++@counts[key]
+      else
+        @counts[key] = 0
+
+  return new Counter

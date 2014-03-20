@@ -54,7 +54,7 @@
 
               form.form-horizontal(role="form")
 
-                http-parameter(ng-repeat="parameter in params")
+                http-parameter(ng-repeat="parameter in params track by parameter.id")
 
                 .method-body.form-group(ng-show="m.body.length")
                   label(ng-show="m.bodyDescription")
