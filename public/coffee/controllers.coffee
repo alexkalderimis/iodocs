@@ -58,6 +58,9 @@ Controllers.controller 'ParameterInputCtrl', ($scope, $q, $log, $timeout, Sugges
 Controllers.controller 'EndpointList', ($scope) ->
   $scope.showSearch = false
 
+  $scope.$watch 'showSearch', (show) ->
+    $scope.endpointFilter = null unless show
+
 arrayRegexp = /\[\]$/
 bracesRexexp = /^{.*}$/
 
