@@ -1,14 +1,48 @@
 Services = angular.module('iodocs.services', [])
 
+###
+# Turn strings like 'foo=bar,foo=baz,qooz=quux,quibblable' into functions.
+#
+# The above example should compile to:
+#
+#   (v) -> (v.foo == 'bar' or v.foo == 'baz') and (f.qooz == 'quux') and (foo.quibblable)
+#
+###
+optionFilter = (filterString) ->
+  testFns = {}
+  testStrs = filterString.split ','
+
+  console.log testStrs
+
+  for str in testStrs then do (str) ->
+    [key, val] = str.split '='
+    console.log key, val
+    test = if val?
+      (v) -> v[key] == val
+    else
+      (v) -> v[key]
+
+    currentTest = testFns[key]
+
+    if currentTest?
+      testFns[key] = (v) -> currentTest(v) or test(v)
+    else
+      testFns[key] = test
+
+  testKeys = Object.keys testFns
+  if not testKeys.length
+    throw new Error("No test keys")
+
+  if testKeys.length is 1
+    testFns[testKeys[0]]
+  else
+    testKeys.map((k) -> testFns[k]).reduce (f, g) -> (x) -> f(x) and g(x)
+
 parsePart = (datum, parseString, bindings = {}) ->
   return null unless datum
   if m = parseString.match(/^([^{}]+){(.*)}$/)
     key = m[1]
-    [filterKey, filterVal] = m[2].split '='
-    filter = if filterVal?
-      (v) -> v[filterKey] == filterVal
-    else
-      (v) -> v[filterKey]
+    filter = optionFilter m[2]
   else
     key = parseString
     filter = null
