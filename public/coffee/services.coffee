@@ -77,7 +77,10 @@ class DefaultParser extends OptionParser
 
   constructor: (parseString) ->
     binding = parseString.match(defaultBindingRE)[1]
-    super binding
+    if binding.length is 0
+      @parts = []
+    else
+      super binding
 
   parse: (data) =>
     for p in @parts
@@ -162,6 +165,8 @@ Services.factory 'Suggestions', ($http, $q, $log, $cacheFactory, $rootScope, Par
       defaultParser = new DefaultParser param.Default
       url = getUrl $rootScope, path
       opts = getOpts $rootScope
+      opts.headers ?= {}
+      opts.headers.Range = "records=0-100"
 
       $http.get(url, opts)
           .then(optionParser.parse)
