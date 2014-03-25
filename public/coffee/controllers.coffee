@@ -47,9 +47,20 @@ Controllers.controller 'ParameterInputCtrl', ($scope, $q, $log, $timeout, Sugges
     else
       []
 
+  uniq = (things) ->
+    index = {}
+    for thing in things
+      index[thing] = 1
+    return Object.keys(index)
+
   $scope.suggest = (vv) ->
+    term = String(vv).toLowerCase()
     if $scope.parameter.Options
-      return Suggestions.getSuggestions $scope.params, $scope.parameter
+      # Not sure why I had to implement filtering logic here...
+      filter = (s) -> 0 <= String(s).toLowerCase().indexOf term
+      return Suggestions.getSuggestions($scope.params, $scope.parameter)
+                        .then( (sgs) -> sgs.filter filter )
+                        .then( uniq )
     else
       d = $q.defer()
       d.resolve getHistory()
@@ -105,8 +116,14 @@ Controllers.controller 'ParameterCtrl', ($scope, $log, Suggestions, Counter) ->
 
 getCurrentValue = (ps, name) -> return p.currentValue for p in ps when p.Name is name
 
+initMethod = (m) ->
+  m.results ?= []
+  body = m.body?[0]
+  m.bodyContentType = body?.contentType
+  m.content = body?.example
 
 Controllers.controller 'MethodCtrl', ($scope, $q, $log, $http, Suggestions, Defaults, ParamUtils, Storage, parameterHistoryKey, Counter, Markdown) ->
+  initMethod $scope.m
   $scope.params = angular.copy($scope.m.parameters)
 
   do initParams = ->
@@ -232,13 +249,6 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
   methodMatches = (m) ->
     (m.HTTPMethod is $routeParams.method) and ((m.URI or '/') is $routeParams.servicePath)
 
-  initMethod = (m) ->
-    m.active = true
-    m.results ?= []
-    body = m.body?[0]
-    m.bodyContentType = body?.contentType
-    m.content = body?.example
-
   methodWatch = (s) ->
     {HTTPMethod, URI} = s.currentMethod
     HTTPMethod + URI
@@ -264,7 +274,7 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
     return $location.path '/'
 
   m.active = false for m in $scope.endpoint.methods
-  initMethod $scope.currentMethod
+  $scope.currentMethod.active = true
 
   $log.debug 'CURRENT METHOD', $scope.currentMethod
 
@@ -279,6 +289,11 @@ EndpointCtrl = ($scope, $log, $http, $routeParams, $location, Storage) ->
 
 Controllers.controller 'EndpointDetails', EndpointCtrl
 
+APPL_JSON = /^application\/json/
+TEXT_XML = /^text\/xml/
+APPL_XML = /^application\/xml/
+TEXT_HTML = /^text\/html/
+
 Controllers.controller 'ResponseCtrl', ($q, $timeout, $scope, $log, xmlParser, TreeParsing) ->
 
   $scope.navType = 'pills'
@@ -288,34 +303,50 @@ Controllers.controller 'ResponseCtrl', ($q, $timeout, $scope, $log, xmlParser, T
   $scope.hasParams = -> Object.keys($scope.params).length > 0
   $scope.parsedData = []
   $scope.tree = expanded: false
+  $scope.totalPromises = 0
+  $scope.currentParsed = 0
+  $scope.percentDone = 0
+
+  startId = TreeParsing.nextId()
 
   ct = ($scope.headers['content-type'] ? '')
-  promises = []
-  if $scope.res.response?.length
-    if ct.match(/^application\/json/)
-      parsed = try
-        JSON.parse($scope.res.response)
-      catch e
-        {}
-      for k, v of parsed
-        promises.push TreeParsing.parseObj k, v
-    else if /^text\/xml/.test(ct) or /^application\/xml/.test(ct)
-      try
-        dom = xmlParser.parse $scope.res.response
-        promises.push TreeParsing.parseDOMElem(dom.documentElement)
-      catch e
-        $log.error 'Error parsing xml', e
+  if APPL_JSON.test ct
+    parsed = try
+      JSON.parse($scope.res.response)
+    catch e
+      {}
+    $scope.formattedResponse = JSON.stringify(parsed, null, 2) if parsed?
 
   setTree = (tree) ->
     $scope.parsedData = tree
     $log.debug "Next id = #{ TreeParsing.nextId() }"
+  
+  $scope.makeBrowseableResponse = ->
+    return if $scope.parsedData.length # Already done.
+    promises = []
+    if $scope.res.response?.length
+      if APPL_JSON.test ct
+        parsed = try
+          JSON.parse($scope.res.response)
+        catch e
+          {}
+        for k, v of parsed
+          promises.push TreeParsing.parseObj k, v
+      else if TEXT_XML.test(ct) or APPL_XML.test(ct)
+        try
+          dom = xmlParser.parse $scope.res.response
+          promises.push TreeParsing.parseDOMElem(dom.documentElement)
+        catch e
+          $log.error 'Error parsing xml', e
 
-  if promises.length
-    $q.all(promises)
-      .then((parsed) -> TreeParsing.expandTree parsed, not $scope.tree.expanded)
-      .then setTree, $log.error
+    if promises.length
+      $q.all(promises)
+        .then((parsed) -> TreeParsing.expandTree parsed, not $scope.tree.expanded)
+        .then setTree, $log.error
 
-  $scope.isHTML = -> !!ct?.match /^text\/html/
+  $scope.browseable = APPL_JSON.test(ct) or APPL_XML.test(ct) or TEXT_XML.test(ct)
+
+  $scope.isHTML = TEXT_HTML.test ct
 
   processingInstructions = /<\?[^?]*\?>/g
   $scope.cleanHTML = $scope.res.response.replace(processingInstructions, '')
