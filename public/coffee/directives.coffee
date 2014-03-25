@@ -69,7 +69,8 @@ IODirectives.directive 'scrollIf', ($log) ->
     scrollIntoView = ->
       po = getOffsetTop elem.parent()
       eo = getOffsetTop elem
-      elem.parent()[0].scrollTop = eo - po
+      offset = scope.$eval(attrs.scrollOffset) or 0
+      elem.parent()[0].scrollTop = eo - (po + offset)
     setTimeout -> scrollIntoView() if scope.$eval(attrs.scrollIf)
 
 IODirectives.directive 'focusMe', ($timeout, $parse) ->
