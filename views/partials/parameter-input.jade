@@ -23,5 +23,5 @@ ng-switch(on="parameter.Type")
     ng-switch-default,
     ng-model="parameter.currentValue",
     ng-required="{{parameter.required}}",
-    typeahead="s for s in suggest($viewValue) | filter:$viewValue | limitTo:10",
+    typeahead="s for s in suggest($viewValue)",
     ng-change="change()")

@@ -41,18 +41,31 @@ accordion-group.api-response(
             td.header-value {{value}}
 
     tabset.responses(type="navType")
+      tab.formatted(ng-if="formattedResponse")
+        tab-heading Formatted
+        .metadata
+          span.label.label-info {{res.headers['content-type']}}
+        pre.response {{formattedResponse}}
       tab.raw
         tab-heading Raw
         .metadata
           span.label.label-info {{res.headers['content-type']}}
         pre.response {{res.response}}
-      tab.cooked(ng-if="parsedData.length")
+      tab.cooked(ng-if="browseable", select="makeBrowseableResponse()")
         tab-heading Browse
-        button.btn.pull-right.btn-primary(type="button", ng-model="tree.expanded", btn-checkbox) Expand
-        .parsed-data(angular-treeview, tree-model="parsedData", tree-id="responsetree")
-      tab.view(ng-if="!parsedData.length")
+        div(ng-if="parsedData.length")
+          button.btn.pull-right.btn-primary(type="button", ng-model="tree.expanded", btn-checkbox) Expand
+          .parsed-data(angular-treeview, tree-model="parsedData", tree-id="responsetree")
+        .progress(ng-if="!parsedData.length")
+          .progress-bar(role="progressbar",
+            aria-valuenow="{{currentParsed}}",
+            aria-valuemin="0",
+            aria-valuemax="{{totalPromises}}",
+            style="width: {{percentDone}}%") {{percentDone}}%
+
+      tab.view(ng-if="flatFile || isHTML")
         tab-heading View
-        .from-html(ng-if="isHTML()", ng-bind-html="cleanHTML")
+        .from-html(ng-if="isHTML", ng-bind-html="cleanHTML")
         .from-flat-file(ng-if="flatFile")
           table.table
             thead

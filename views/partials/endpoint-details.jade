@@ -2,7 +2,7 @@
   .sidebar(resize, resize-offset="50", resize-cutoff="750", ng-controller="SidebarCtrl")
 
     .input-group.filter
-      span.input-group-addon
+      span.input-group-addon.hidden-xs.hidden-sm.hidden-md
         i.glyphicon.glyphicon-search
       input.form-control(type="text", ng-model="endpointFilter", placeholder="by term")
       span.input-group-btn
@@ -12,6 +12,7 @@
       a.list-group-item(href="#/{{e.identifier}}",
         ng-repeat="e in endpoints | filter:endpointFilter",
         scroll-if="e === endpoint",
+        scroll-offset="50",
         ng-class="{active: e === endpoint}") {{e.name}}
 
   .endpoint
@@ -21,7 +22,7 @@
       h2 {{endpoint.name}}
 
 
-    tabset(justified="true")
+    tabset(justified="false")
       tab(ng-repeat="m in endpoint.methods",
         select="methodChanged()",
         deselect="methodChanged()",
