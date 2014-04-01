@@ -16,7 +16,7 @@ block content
   .main.container-fluid
     .row
       - for (var api in apis)
-        .panel.card.panel
+        .panel.card.panel-default
           .panel-heading
             h3
               a(href= '/' + api + '/docs') #{apis[api].name || api}

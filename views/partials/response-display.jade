@@ -40,7 +40,9 @@ accordion-group.api-response(
             td.header-name {{header}}
             td.header-value {{value}}
 
-    tabset.responses(type="navType")
+    .progress.progress-striped.active(ng-if="res.code == 'pending'")
+      .progress-bar(style="width: 100%")
+    tabset.responses(type="navType", ng-if="res.code != 'pending'")
       tab.formatted(ng-if="formattedResponse")
         tab-heading Formatted
         .metadata
@@ -56,7 +58,7 @@ accordion-group.api-response(
         div(ng-if="parsedData.length")
           button.btn.pull-right.btn-primary(type="button", ng-model="tree.expanded", btn-checkbox) Expand
           .parsed-data(angular-treeview, tree-model="parsedData", tree-id="responsetree")
-        .progress(ng-if="!parsedData.length")
+        .progress.progress-striped.active(ng-if="!parsedData.length")
           .progress-bar(role="progressbar",
             aria-valuenow="{{currentParsed}}",
             aria-valuemin="0",
