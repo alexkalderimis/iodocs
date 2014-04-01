@@ -1,5 +1,5 @@
 .row.endpoint-view
-  .sidebar(resize, resize-offset="50", resize-cutoff="750", ng-controller="SidebarCtrl")
+  .sidebar(resize, resize-offset="90", resize-cutoff="750", ng-controller="SidebarCtrl")
 
     .input-group.filter
       span.input-group-addon.hidden-xs.hidden-sm.hidden-md
@@ -12,7 +12,7 @@
       a.list-group-item(href="#/{{e.identifier}}",
         ng-repeat="e in endpoints | filter:endpointFilter",
         scroll-if="e === endpoint",
-        scroll-offset="50",
+        scroll-offset="55",
         ng-class="{active: e === endpoint}") {{e.name}}
 
   .endpoint
