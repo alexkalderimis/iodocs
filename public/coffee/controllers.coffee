@@ -305,7 +305,7 @@ Controllers.controller 'ResponseCtrl', ($q, $timeout, $scope, $log, xmlParser, T
   $scope.tree = expanded: false
   $scope.totalPromises = 0
   $scope.currentParsed = 0
-  $scope.percentDone = 0
+  $scope.percentDone = 100
 
   startId = TreeParsing.nextId()
 
