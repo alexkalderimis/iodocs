@@ -224,6 +224,7 @@ app.configure(function() {
       return stylus(str)
         .set('filename', path)
         .set('compress', !!config.compressCss)
+        .define('theme', new stylus.nodes.String(config.theme))
         .use(nib()).import('nib');
     }
   }));
