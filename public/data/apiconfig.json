@@ -71,6 +71,18 @@
         "booleanTrueVal": "true",
         "booleanFalseVal": "false"
     },
+    "mgi-beta": {
+        "name": "MouseMine-β",
+        "protocol": "http",
+        "baseURL": "beta.mousemine.org",
+        "publicPath": "/mousemine/service",
+        "version": "/version",
+        "auth": "key",
+        "intermine": true,
+        "keyParam": "token",
+        "booleanTrueVal": "true",
+        "booleanFalseVal": "false"
+    },
     "modmine": {
         "name": "modMine",
         "protocol": "http",
