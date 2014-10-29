@@ -164,10 +164,9 @@ function initAppConfig () {
           res.on('end', function done () {
               logger.log('debug', "Retrieved service listing for %s", name);
               try {
+                imAPIs[name] = JSON.parse(body);
                 if (api.excludeRequiresAuthn === true) {
-                  imAPIs[name] = JSON.parse(body, reviver);
-                } else {
-                  imAPIs[name] = JSON.parse(body);
+                  imAPIs[name] = excludeRequiresAuthn(imAPIs[name]);
                 }
               } catch (e) {
                 var msg = "Error parsing service listing for " + name + ": " + e;
@@ -182,13 +181,37 @@ function initAppConfig () {
       }
     }
 
-    /* exclude endpoints that require authentication
-       set 'excludeRequiresAuthn': 'true' in apiconfig.json */
-    function reviver(k, v) {
-      if (k === 'methods' && v[0]['RequiresAuthentication'] === 'true') {
-          return undefined;
+    /* set 'excludeRequiresAuthn': 'true' in apiconfig.json
+       - exclude endpoints that require authentication
+       - disable login capabilities on mine-docs page */
+    function excludeRequiresAuthn(imAPI) {
+      var imAPIflt = {};
+      for (var k1 in imAPI) {
+        imAPIflt[k1] = [];
+        if (k1 === 'endpoints') {
+          for(var i = 0; i < imAPI[k1].length; i++) {
+            var e = {}, m = [];
+            for (var k2 in imAPI[k1][i]) {
+              if (k2 === 'methods') {
+                for (var j = 0; j < imAPI[k1][i][k2].length; j++) {
+                  if (imAPI[k1][i][k2][j]['RequiresAuthentication'] === 'false') {
+                    m.push(imAPI[k1][i][k2][j]);
+                  }
+                }
+                e[k2] = m;
+              } else {
+                e[k2] = imAPI[k1][i][k2];
+              }
+            }
+            if (m.length !== 0) {
+              imAPIflt[k1].push(e);
+            }
+          }
+        } else if (k1 !== 'auth') {
+          imAPIflt[k1].push(imAPI[k1]);
+        }
       }
-      return v;
+      return imAPIflt;
     }
   });
 }
