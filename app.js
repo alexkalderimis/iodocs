@@ -156,7 +156,8 @@ function initAppConfig () {
 
       logger.debug("Fetching service listing from " + serviceListingURI);
 
-      req = http.get(serviceListingURI, function responseHandler (res) {
+      var doget = (api.protocol === 'https') ? https.get : http.get;
+      req = doget(serviceListingURI, function responseHandler (res) {
           var body = "";
           res.on('data', function(chunk) { body += chunk; });
           res.on('error', handleError);
@@ -164,6 +165,9 @@ function initAppConfig () {
               logger.log('debug', "Retrieved service listing for %s", name);
               try {
                 imAPIs[name] = JSON.parse(body);
+                if (api.excludeRequiresAuthn === true) {
+                  imAPIs[name] = excludeRequiresAuthn(imAPIs[name]);
+                }
               } catch (e) {
                 var msg = "Error parsing service listing for " + name + ": " + e;
                 handleError(new Error(msg));
@@ -176,6 +180,39 @@ function initAppConfig () {
         delete apisConfig[name];
       }
     }
+
+    /* set 'excludeRequiresAuthn': 'true' in apiconfig.json
+       - exclude endpoints that require authentication
+       - disable login capabilities on mine-docs page */
+    function excludeRequiresAuthn(imAPI) {
+      var imAPIflt = {};
+      for (var k1 in imAPI) {
+        imAPIflt[k1] = [];
+        if (k1 === 'endpoints') {
+          for(var i = 0; i < imAPI[k1].length; i++) {
+            var e = {}, m = [];
+            for (var k2 in imAPI[k1][i]) {
+              if (k2 === 'methods') {
+                for (var j = 0; j < imAPI[k1][i][k2].length; j++) {
+                  if (imAPI[k1][i][k2][j]['RequiresAuthentication'] === 'false') {
+                    m.push(imAPI[k1][i][k2][j]);
+                  }
+                }
+                e[k2] = m;
+              } else {
+                e[k2] = imAPI[k1][i][k2];
+              }
+            }
+            if (m.length !== 0) {
+              imAPIflt[k1].push(e);
+            }
+          }
+        } else if (k1 !== 'auth') {
+          imAPIflt[k1].push(imAPI[k1]);
+        }
+      }
+      return imAPIflt;
+    }
   });
 }
 
@@ -185,7 +222,7 @@ initAppConfig();
 // Refresh config every configured interval, or every hour.
 setInterval(initAppConfig, (config.refreshInterval || 60 * 60) * 1000);
 
-var app = module.exports = express(); 
+var app = module.exports = express();
 
 app.configure(function() {
 
@@ -340,7 +377,7 @@ function processRequest(req, res, next) {
                     logger.debug(apiSecret);
                     logger.debug(accessToken);
                     logger.debug(accessTokenSecret);
-                    
+
                     var oa = new OAuth(apiConfig.oauth.requestURL || null,
                                        apiConfig.oauth.accessURL || null,
                                        apiKey || null,
@@ -479,7 +516,7 @@ function processRequest(req, res, next) {
 
         // Add credentials, if provided.
         if (credentials) {
-          apiKey = credentials.token; 
+          apiKey = credentials.token;
           if (!reqQuery.headerNames) reqQuery.headerNames = [];
           if (!reqQuery.headerValues) reqQuery.headerValues = [];
 
