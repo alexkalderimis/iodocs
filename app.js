@@ -208,7 +208,7 @@ function initAppConfig () {
             }
           }
         } else {
-          imAPIflt[k1].push(imAPI[k1]);
+          imAPIflt[k1] = imAPI[k1];
         }
       }
       return imAPIflt;
