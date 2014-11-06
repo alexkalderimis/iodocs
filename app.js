@@ -754,6 +754,10 @@ app.get('/:api/definition.json', function (req, res) {
   res.json(imAPIs[req.params.api]);
 });
 
+app.get('/mines.json', function (req, res) {
+  res.json(apisConfig);
+});
+
 app.get('/:api/info.json', function (req, res) {
   res.json(apisConfig[req.params.api]);
 });
