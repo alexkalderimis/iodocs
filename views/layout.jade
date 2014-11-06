@@ -13,8 +13,6 @@ html(ng-app="iodocs")
         link(rel='stylesheet', href='/stylesheets/style.css')
 
     body
-        block content
-
         #io-footer
           span.credit
             | &copy; &nbsp;
@@ -24,6 +22,8 @@ html(ng-app="iodocs")
           .tech
             | Powered by 
             a(href='https://github.com/alexkalderimis/iodocs') I/O Docs
+
+        block content
 
         script(src='/javascripts/vendor/json2.js')
         
