@@ -60,21 +60,23 @@ block content
           span URI
         .col-sm-10
           .input-group
-            .input-group-btn
+            .input-group-btn(is-open = 'status.isopen', dropdown = true)
               button.btn.btn-default.dropdown-toggle
-                | Protocol&nbsp;
+                | {{config.protocol}}://&nbsp;
                 span.caret
               ul.dropdown-menu
                 li
-                  "http://"
+                  a(ng-click = 'config.protocol = "http"')
+                    "http://"
                 li
-                  "https://"
+                  a(ng-click = 'config.protocol = "https"')
+                    "https://"
             input.span3.form-control(ng-model="baseURL", ng-pattern="hostname", placeholder="host name", required="true", type='text', name='baseURL')
             span.input-group-addon /
             input.span3.form-control(ng-model="publicPath", placeholder="optional path", type='text', name='publicPath')
             span.input-group-addon /service
 
-      input(type='hidden', name='protocol', value='http')
+      input(type='hidden', name='protocol', ng-model='config.protocol')
       input(type='hidden', name='version', value='/version')
       input(type='hidden', name='auth', value='key')
       input(type='hidden', name='intermine', value='true')
