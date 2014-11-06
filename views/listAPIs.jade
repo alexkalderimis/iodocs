@@ -11,6 +11,9 @@ block content
       .navbar-header
         .row
           .col-sm-4
+            span.navbar-brand
+              a(href= '/')
+                i.glyphicon.glyphicon-home
             span.navbar-brand Choose an API
 
   .main.container-fluid
@@ -24,6 +27,6 @@ block content
             p
               = apis[api].baseURL
 
-    .row 
+    .row
       .col-sm-3.col-sm-offset-4
         a.btn.btn-large.btn-primary.add-api(href = 'custom') Add a web-service.

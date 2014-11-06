@@ -60,7 +60,15 @@ block content
           span URI
         .col-sm-10
           .input-group
-            span.input-group-addon http://
+            .input-group-btn
+              button.btn.btn-default.dropdown-toggle
+                | Protocol&nbsp;
+                span.caret
+              ul.dropdown-menu
+                li
+                  "http://"
+                li
+                  "https://"
             input.span3.form-control(ng-model="baseURL", ng-pattern="hostname", placeholder="host name", required="true", type='text', name='baseURL')
             span.input-group-addon /
             input.span3.form-control(ng-model="publicPath", placeholder="optional path", type='text', name='publicPath')
@@ -75,7 +83,7 @@ block content
       input(type='hidden', name='booleanFalseVal', value='false')
 
       button.btn.btn-large.btn-primary(type='submit', value='add')
-        i.glyphicon.glyphicon-floppy-disk 
+        i.glyphicon.glyphicon-floppy-disk
         |  Add
 
 block scripts
