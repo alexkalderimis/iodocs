@@ -207,7 +207,7 @@ function initAppConfig () {
               imAPIflt[k1].push(e);
             }
           }
-        } else if (k1 !== 'auth') {
+        } else {
           imAPIflt[k1].push(imAPI[k1]);
         }
       }
