@@ -755,7 +755,12 @@ app.get('/:api/definition.json', function (req, res) {
 });
 
 app.get('/mines.json', function (req, res) {
-  res.json(apisConfig);
+  var api, mines = {};
+  for (var key in apisConfig) {
+    api = apisConfig[key];
+    mines[key] = api.protocol + "://" + api.baseURL + api.publicPath;
+  }
+  res.json(mines);
 });
 
 app.get('/:api/info.json', function (req, res) {
