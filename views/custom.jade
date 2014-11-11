@@ -60,13 +60,23 @@ block content
           span URI
         .col-sm-10
           .input-group
-            span.input-group-addon http://
+            .input-group-btn(is-open = 'status.isopen', dropdown = true)
+              button.btn.btn-default.dropdown-toggle
+                | {{config.protocol}}://&nbsp;
+                span.caret
+              ul.dropdown-menu
+                li
+                  a(ng-click = 'config.protocol = "http"')
+                    "http://"
+                li
+                  a(ng-click = 'config.protocol = "https"')
+                    "https://"
             input.span3.form-control(ng-model="baseURL", ng-pattern="hostname", placeholder="host name", required="true", type='text', name='baseURL')
             span.input-group-addon /
             input.span3.form-control(ng-model="publicPath", placeholder="optional path", type='text', name='publicPath')
             span.input-group-addon /service
 
-      input(type='hidden', name='protocol', value='http')
+      input(type='hidden', name='protocol', ng-model='config.protocol')
       input(type='hidden', name='version', value='/version')
       input(type='hidden', name='auth', value='key')
       input(type='hidden', name='intermine', value='true')
@@ -75,11 +85,12 @@ block content
       input(type='hidden', name='booleanFalseVal', value='false')
 
       button.btn.btn-large.btn-primary(type='submit', value='add')
-        i.glyphicon.glyphicon-floppy-disk 
+        i.glyphicon.glyphicon-floppy-disk
         |  Add
 
 block scripts
   script(src='/javascripts/vendor/angular.min.js')
+  script(src='/javascripts/vendor/ui-bootstrap-tpls-0.10.0.js')
   script(src='/javascripts/custom-api.js')
 
 // end views/custom

@@ -23,6 +23,31 @@
         "booleanTrueVal": "true",
         "booleanFalseVal": "false"
     },
+    "medicmine": {
+        "name": "MedicMine",
+        "protocol": "http",
+        "baseURL": "medicmine.jcvi.org",
+        "publicPath": "/medicmine/service",
+        "version": "/version",
+        "auth": "key",
+        "intermine": true,
+        "keyParam": "token",
+        "booleanTrueVal": "true",
+        "booleanFalseVal": "false"
+    },
+    "thalemine": {
+        "name": "ThaleMine",
+        "protocol": "https",
+        "baseURL": "api.araport.org",
+        "publicPath": "/intermine/v0.4",
+        "version": "/version",
+        "auth": "key",
+        "intermine": true,
+        "keyParam": "token",
+        "booleanTrueVal": "true",
+        "booleanFalseVal": "false",
+        "excludeRequiresAuthn": true
+    },
     "flymine": {
         "name": "FlyMine",
         "protocol": "http",

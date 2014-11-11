@@ -98,10 +98,10 @@ Services.factory 'RequestAuth', ($log, Base64) ->
   return auth: ($scope) ->
     auth = $scope.auth.currentScheme
     credentials = $scope.auth.credentials
-
-    return unless (auth and credentials)
-
     conf = {}
+
+    return conf unless (auth and credentials)
+
     switch auth.mechanism
       when 'parameter'
         if credentials.token
